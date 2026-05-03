@@ -1,0 +1,76 @@
+; ============================================================
+; 04_bubble_sort.nca — Bubble sort 8 integers in memory
+; ============================================================
+; Layout
+;   R5 = base address of array
+;   R6 = length (N)
+;   R3 = outer-loop counter i  (passes remaining)
+;   R4 = inner-loop pointer j  (absolute address of arr[j])
+;   R7 = inner-loop end pointer
+;   R0, R1 = scratch (loaded array values)
+;   R2 = scratch (temp for swap)
+; ============================================================
+
+.data arr 8 3 1 5 2 7 4 6
+.equ N 8
+
+    LOAD    R5, arr             ; base
+    LOAD    R6, #N               ; N
+    SUBI    R3, R6, #1           ; outer counter = N-1
+
+outer:
+    CMPI    R3, 0
+    JLE     done                 ; if outer counter <= 0 → done
+
+    MOV     R4, R5               ; j = base
+    MOV     R7, R5
+    ADD     R7, R7, R3           ; end = base + outer_counter (last comparable index)
+
+inner:
+    CMP     R4, R7
+    JGE     after_inner          ; if j >= end → exit inner
+
+    LOADI   R0, R4               ; R0 = arr[j]
+    ADDI    R4, R4, #1           ; advance j
+    LOADI   R1, R4               ; R1 = arr[j+1]   (j was incremented)
+
+    CMP     R0, R1
+    JLE     no_swap              ; arr[j] <= arr[j+1] → no swap
+
+    ; swap: store R1 at j-1, R0 at j
+    SUBI    R4, R4, #1           ; back to j
+    STOREI  R1, R4               ; arr[j] = R1
+    ADDI    R4, R4, #1           ; j+1
+    STOREI  R0, R4               ; arr[j+1] = R0
+    JMP     inner_continue
+
+no_swap:
+    ; nothing to do
+    NOP
+
+inner_continue:
+    JMP     inner
+
+after_inner:
+    SUBI    R3, R3, #1           ; outer counter --
+    JMP     outer
+
+done:
+    ; print sorted array: R4 = base, R3 = N
+    MOV     R4, R5
+    MOV     R3, R6
+
+print_loop:
+    CMPI    R3, 0
+    JLE     finish
+    LOADI   R0, R4
+    SYSCALL 1                    ; print int
+    LOAD    R0, ' '
+    SYSCALL 2                    ; print space
+    ADDI    R4, R4, #1
+    SUBI    R3, R3, #1
+    JMP     print_loop
+
+finish:
+    SYSCALL 6                    ; newline
+    HALT

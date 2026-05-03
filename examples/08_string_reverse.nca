@@ -1,0 +1,46 @@
+; ============================================================
+; 08_string_reverse.nca — Reverse a zero-terminated string
+; ============================================================
+
+.data msg 'H' 'E' 'L' 'L' 'O' ' ' 'W' 'O' 'R' 'L' 'D' 0
+.data rev 0 0 0 0 0 0 0 0 0 0 0 0
+
+    ; First find length: walk msg until 0
+    LOAD    R0, msg
+    LOAD    R1, #0           ; length
+
+len_loop:
+    LOADI   R2, R0
+    CMPI    R2, 0
+    JE      len_done
+    ADDI    R0, R0, #1
+    ADDI    R1, R1, #1
+    JMP     len_loop
+
+len_done:
+    ; R1 = length. Now copy reversed.
+    LOAD    R3, msg          ; src ptr (start)
+    LOAD    R4, rev          ; dst ptr (start)
+    ADD     R4, R4, R1       ; dst ptr (end-1, will write zero terminator there)
+    LOAD    R5, #0
+    STOREI  R5, R4           ; null terminator at rev[length]
+    SUBI    R4, R4, #1       ; back to last writable position
+
+    MOV     R6, R1           ; chars to copy
+
+copy_loop:
+    CMPI    R6, 0
+    JLE     print
+
+    LOADI   R2, R3           ; ch = msg[src]
+    STOREI  R2, R4           ; rev[dst] = ch
+    ADDI    R3, R3, #1
+    SUBI    R4, R4, #1
+    SUBI    R6, R6, #1
+    JMP     copy_loop
+
+print:
+    LOAD    R0, rev
+    SYSCALL 3                ; PRINT_STR
+    SYSCALL 6
+    HALT

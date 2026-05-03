@@ -1,0 +1,81 @@
+; ============================================================
+; 05_prime_sieve.nca — Sieve of Eratosthenes up to N=30
+; ============================================================
+; sieve[i] = 1 means COMPOSITE, 0 means PRIME (after init)
+; Layout:
+;   R5 = base address of sieve
+;   R6 = N (upper bound, inclusive)
+;   R0..R4 = scratch
+; ============================================================
+
+.data sieve 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+.equ N 30
+
+    LOAD    R5, sieve
+    LOAD    R6, #N
+
+    ; Mark 0 and 1 as non-prime (composite=1)
+    LOAD    R0, #1
+    STOREX  R0, R5, #0
+    STOREX  R0, R5, #1
+
+    ; outer loop: i from 2 to N
+    LOAD    R1, #2               ; i
+
+outer:
+    CMP     R1, R6
+    JG      print                 ; if i > N → print
+
+    ; if sieve[i] != 0 (already composite), skip inner
+    MOV     R2, R1               ; R2 = i  (use as offset via STOREX/LOADX won't take reg-offset)
+    MOV     R7, R5
+    ADD     R7, R7, R1           ; R7 = &sieve[i]
+    LOADI   R0, R7
+    CMPI    R0, 0
+    JNE     advance_i
+
+    ; mark all multiples of i (starting at 2*i) as composite
+    MOV     R3, R1
+    ADD     R3, R3, R1           ; j = 2*i
+
+inner:
+    CMP     R3, R6
+    JG      advance_i            ; if j > N → done with this prime
+
+    MOV     R7, R5
+    ADD     R7, R7, R3           ; &sieve[j]
+    LOAD    R0, #1
+    STOREI  R0, R7               ; sieve[j] = 1
+    ADD     R3, R3, R1           ; j += i
+    JMP     inner
+
+advance_i:
+    ADDI    R1, R1, #1
+    JMP     outer
+
+; ── print every prime ─────────────────────────────────────
+print:
+    LOAD    R1, #2
+
+print_loop:
+    CMP     R1, R6
+    JG      finish
+
+    MOV     R7, R5
+    ADD     R7, R7, R1
+    LOADI   R0, R7
+    CMPI    R0, 0
+    JNE     skip                 ; not prime
+
+    MOV     R0, R1
+    SYSCALL 1                    ; print prime
+    LOAD    R0, ' '
+    SYSCALL 2
+
+skip:
+    ADDI    R1, R1, #1
+    JMP     print_loop
+
+finish:
+    SYSCALL 6
+    HALT

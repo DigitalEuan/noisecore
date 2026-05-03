@@ -1,0 +1,27 @@
+; ============================================================
+; 03_factorial_recursive.nca — Recursive factorial via CALL/RET
+; ============================================================
+; Calling convention:
+;   R0 = argument in / return value out
+;   PUSH/POP for caller-saved registers
+; ============================================================
+
+    LOAD    R0, #6           ; argument
+    CALL    fact
+    SYSCALL 1                ; print result
+    SYSCALL 6
+    HALT
+
+; ── fact(R0) — returns R0! in R0 ────────────────────────────
+fact:
+    CMPI    R0, 1
+    JLE     fact_base        ; if R0 <= 1, return 1
+    PUSH    R0               ; save n
+    SUBI    R0, R0, #1       ; n-1
+    CALL    fact             ; R0 = (n-1)!
+    POP     R1               ; restore n into R1
+    MUL     R0, R0, R1       ; n * (n-1)!
+    RET
+fact_base:
+    LOAD    R0, #1
+    RET

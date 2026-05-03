@@ -1,0 +1,16 @@
+; ============================================================
+; 01_hello.nca — print "HELLO" using PRINT_CHAR syscall
+; ============================================================
+
+    LOAD    R0, 'H'
+    SYSCALL 2
+    LOAD    R0, 'E'
+    SYSCALL 2
+    LOAD    R0, 'L'
+    SYSCALL 2
+    LOAD    R0, 'L'
+    SYSCALL 2
+    LOAD    R0, 'O'
+    SYSCALL 2
+    SYSCALL 6           ; PRINT_NL
+    HALT

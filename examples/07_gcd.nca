@@ -1,0 +1,22 @@
+; ============================================================
+; 07_gcd.nca — Euclidean GCD via subroutine
+; ============================================================
+; gcd(R0, R1) → R0
+; ============================================================
+
+    LOAD    R0, #252
+    LOAD    R1, #198
+    CALL    gcd
+    SYSCALL 1                ; print
+    SYSCALL 6
+    HALT
+
+gcd:
+    CMPI    R1, 0
+    JE      gcd_done         ; if b == 0 → return a
+    MOD     R2, R0, R1       ; r = a mod b
+    MOV     R0, R1           ; a = b
+    MOV     R1, R2           ; b = r
+    JMP     gcd
+gcd_done:
+    RET

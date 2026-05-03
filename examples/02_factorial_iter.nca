@@ -1,0 +1,20 @@
+; ============================================================
+; 02_factorial_iter.nca — Iterative factorial of 6 (=720)
+; ============================================================
+; Uses CMPI + JLE for clear loop logic.
+
+    LOAD    R0, #1           ; accumulator = 1
+    LOAD    R1, #1           ; counter i   = 1
+    LOAD    R2, #6           ; n = 6
+
+loop:
+    CMPI    R1, 6
+    JG      done             ; if i > 6 → done
+    MUL     R0, R0, R1       ; acc *= i
+    ADDI    R1, R1, #1       ; i++
+    JMP     loop
+
+done:
+    SYSCALL 1                ; PRINT_INT (R0)
+    SYSCALL 6                ; PRINT_NL
+    HALT
