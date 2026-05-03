@@ -1,0 +1,51 @@
+; ============================================================
+; 12_palindrome_check.nca — Palindrome classification
+; Expected output: YES
+; ============================================================
+.data msg 'R' 'A' 'D' 'A' 'R' 0
+
+    LOAD R0, msg
+    LOAD R1, #0
+
+len_loop:
+    LOADI R2, R0
+    CMPI  R2, 0
+    JE    len_done
+    ADDI  R0, R0, #1
+    ADDI  R1, R1, #1
+    JMP   len_loop
+
+len_done:
+    LOAD R3, msg
+    LOAD R4, msg
+    ADD  R4, R4, R1
+    SUBI R4, R4, #1
+
+check_loop:
+    CMP  R3, R4
+    JGE  pal_yes
+    LOADI R5, R3
+    LOADI R6, R4
+    CMP  R5, R6
+    JNE  pal_no
+    ADDI R3, R3, #1
+    SUBI R4, R4, #1
+    JMP  check_loop
+
+pal_yes:
+    LOAD R0, 'Y'
+    SYSCALL 2
+    LOAD R0, 'E'
+    SYSCALL 2
+    LOAD R0, 'S'
+    SYSCALL 2
+    SYSCALL 6
+    HALT
+
+pal_no:
+    LOAD R0, 'N'
+    SYSCALL 2
+    LOAD R0, 'O'
+    SYSCALL 2
+    SYSCALL 6
+    HALT

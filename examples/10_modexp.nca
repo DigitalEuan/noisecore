@@ -1,0 +1,25 @@
+; ============================================================
+; 10_modexp.nca — Compute 7^13 mod 97 by repeated modular multiply
+; Expected output: 38
+; ============================================================
+.equ BASE 7
+.equ EXP 13
+.equ MODN 97
+
+    LOAD R0, #1
+    LOAD R1, #BASE
+    LOAD R2, #EXP
+
+loop:
+    CMPI R2, 0
+    JLE  done
+    MUL  R0, R0, R1
+    LOAD R3, #MODN
+    MOD  R0, R0, R3
+    SUBI R2, R2, #1
+    JMP  loop
+
+done:
+    SYSCALL 1
+    SYSCALL 6
+    HALT

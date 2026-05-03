@@ -1,0 +1,24 @@
+; ============================================================
+; 14_checksum_ascii.nca — Additive checksum over ASCII bytes mod 256
+; Message: "NOISECORE"
+; Expected output: 167
+; ============================================================
+.data msg 'N' 'O' 'I' 'S' 'E' 'C' 'O' 'R' 'E' 0
+
+    LOAD R3, msg
+    LOAD R4, #0
+
+loop:
+    LOADI R0, R3
+    CMPI  R0, 0
+    JE    done
+    ADD   R4, R4, R0
+    ADDI  R3, R3, #1
+    JMP   loop
+
+done:
+    LOAD R1, #256
+    MOD  R0, R4, R1
+    SYSCALL 1
+    SYSCALL 6
+    HALT

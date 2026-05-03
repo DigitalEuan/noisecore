@@ -1,0 +1,16 @@
+; ============================================================
+; 13_stream_sum3.nca — Read 3 integers and emit their sum
+; Expected output with inputs [5,7,8]: 20
+; ============================================================
+    SYSCALL 4
+    MOV R1, R0
+    SYSCALL 4
+    MOV R2, R0
+    SYSCALL 4
+    MOV R3, R0
+    ADD R4, R1, R2
+    ADD R4, R4, R3
+    MOV R0, R4
+    SYSCALL 1
+    SYSCALL 6
+    HALT
