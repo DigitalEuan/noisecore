@@ -1868,7 +1868,7 @@ fact_base:
     LOAD R0, #1
     RET`,
 
-; 04_bubble_sort.nca — Bubble sort
+bubble_sort:`; 04_bubble_sort.nca — Bubble sort
 ; Sorts array [5,3,8,1,9,2,7,4,6] in-place, then prints sorted values.
 ; Demonstrates LOADI/STOREI indexed memory access and .data arrays.
 .equ N 9
@@ -1883,7 +1883,7 @@ outer_loop:
     LOAD R4, #0          ; R4 = index
 
 inner_loop:
-    CMP R4, R5           ; ← fixed: CMP instead of CMPI
+    CMPI R4, R5
     JGE outer_loop
     LOADI R0, R3         ; R0 = arr[i]
     ADDI R6, R3, #1      ; R6 = &arr[i+1]
@@ -1910,9 +1910,9 @@ print_loop:
     SUBI R4, R4, #1
     JMP print_loop
 done:
-    HALT
+    HALT`,
 
-; 05_prime_sieve.nca — Sieve of Eratosthenes
+prime_sieve:`; 05_prime_sieve.nca — Sieve of Eratosthenes
 ; Prints primes up to 30. Uses MOD (SubstrateALU Knuth D).
 .equ LIMIT 30
 
@@ -1922,7 +1922,8 @@ outer:
     JG done
     LOAD R1, #2          ; divisor = 2
     MOV R2, R0           ; save candidate
-    LOAD R3, #0          ; is_composite = 0  (removed the erroneous MOV)
+    MOV R3, #0           ; is_composite = 0 -- use LOAD instead
+    LOAD R3, #0
 inner:
     MUL R4, R1, R1       ; R4 = divisor^2
     CMP R4, R2
@@ -1945,7 +1946,7 @@ skip_print:
     ADDI R0, R0, #1
     JMP outer
 done:
-    HALT
+    HALT`,
 
 fibonacci:`; 06_fibonacci.nca — Fibonacci sequence
 ; Prints first 10 Fibonacci numbers using PUSH/POP for caller-save.
