@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NoiseCore VM v1.3.0 TRIAD &#8212; Interactive IDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --bg:#020406;--bg1:#060b12;--bg2:#090f1a;--bg3:#0d1520;--bg4:#111d28;
+  --border:#18263a;--border2:#1f3248;
+  --amber:#f0a800;--amber2:#c07800;--amber3:#6a4800;
+  --amberDim:rgba(240,168,0,.06);--amberGlow:rgba(240,168,0,.18);
+  --green:#00e878;--green2:#00a052;--green3:#005a2c;
+  --greenGlow:rgba(0,232,120,.10);--greenDim:rgba(0,232,120,.04);
+  --red:#ff3248;--red2:#9a1828;--redGlow:rgba(255,50,72,.09);
+  --cyan:#00d8cc;--cyanGlow:rgba(0,216,204,.06);
+  --blue:#4488ff;
+  --text:#7a9ab8;--text2:#3a5470;--text3:#c8dff0;--text4:#162430;
+  --mono:'JetBrains Mono','Courier New',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--mono);color:var(--text);display:flex;flex-direction:column}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9000;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 3px,rgba(0,0,0,.03) 3px,rgba(0,0,0,.03) 4px)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+/* HEADER */
+#hdr{
+  position:relative;display:flex;align-items:center;gap:10px;
+  padding:0 14px;height:44px;flex-shrink:0;
+  background:var(--bg1);border-bottom:1px solid var(--border);
+}
+#hdr::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber3) 40%,var(--amber2) 50%,var(--amber3) 60%,transparent);
+  opacity:.5;
+}
+.logo-main{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--amber)}
+.logo-sub{font-size:7.5px;letter-spacing:.16em;color:var(--text2);font-family:var(--sans);margin-top:1px}
+.hsep{width:1px;height:22px;background:var(--border2);flex-shrink:0}
+.mpill{
+  display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:3px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text2);font-family:var(--mono);font-size:9px;font-weight:500;
+  letter-spacing:.1em;cursor:pointer;transition:all .14s;
+}
+.mpill:hover{border-color:var(--amber3);color:var(--text)}
+.mpill.active{background:var(--amberDim);border-color:var(--amber3);color:var(--amber)}
+.mpill.sub-on{background:var(--greenDim);border-color:var(--green3);color:var(--green)}
+.mdot{width:5px;height:5px;border-radius:50%;background:currentColor;transition:all .14s}
+.cbtn{
+  display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:3px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--text);font-family:var(--mono);font-size:9px;font-weight:500;
+  letter-spacing:.08em;cursor:pointer;transition:all .14s;
+}
+.cbtn:hover{background:var(--bg3)}
+.cbtn.run{border-color:var(--amber3);color:var(--amber);background:var(--amberDim)}
+.cbtn.run:hover{background:var(--amberGlow)}
+.cbtn.run.going{border-color:var(--red2);color:var(--red);background:var(--redGlow)}
+.cbtn.step{border-color:var(--green3);color:var(--green)}
+.cbtn.step:hover{background:var(--greenGlow)}
+.cbtn.step:disabled{opacity:.28;cursor:not-allowed;pointer-events:none}
+.cbtn.rst:hover{border-color:var(--red2);color:var(--red)}
+.cbtn.docs{border-color:var(--border2);color:var(--cyan);margin-left:2px}
+.cbtn.docs:hover{background:var(--cyanGlow);border-color:var(--cyan)}
+#hdr-r{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tbtn{
+  padding:3px 8px;border-radius:3px;border:1px solid var(--border);
+  background:transparent;font-size:9px;color:var(--text2);
+  cursor:pointer;font-family:var(--mono);letter-spacing:.08em;transition:all .14s;
+}
+.tbtn:hover{border-color:var(--border2);color:var(--text)}
+.tbtn.on{border-color:var(--amber3);color:var(--amber)}
+#stat-chip{
+  font-size:9px;color:var(--text2);letter-spacing:.1em;
+  padding:3px 8px;border-radius:3px;border:1px solid var(--border);min-width:66px;text-align:center;
+}
+#stat-chip.run{color:var(--amber);border-color:var(--amber3)}
+#stat-chip.err{color:var(--red);border-color:var(--red2)}
+#stat-chip.done{color:var(--green);border-color:var(--green3)}
+#stat-chip.stp{color:var(--cyan);border-color:var(--cyan)}
+/* MAIN */
+#main{flex:1;display:flex;overflow:hidden}
+.rzr{width:3px;background:var(--border);flex-shrink:0;cursor:col-resize;transition:background .14s}
+.rzr:hover,.rzr.drag{background:var(--amber3)}
+/* EDITOR */
+#p-ed{width:330px;min-width:200px;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden;flex-shrink:0}
+#ed-top{display:flex;align-items:center;gap:6px;padding:5px 9px;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
+.slbl{font-size:8px;font-weight:500;letter-spacing:.16em;color:var(--text2);font-family:var(--sans);text-transform:uppercase}
+#ex-sel{flex:1;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:9px;padding:3px 5px;border-radius:2px;cursor:pointer}
+#ed-wrap{flex:1;position:relative;overflow:hidden}
+#step-hl{position:absolute;left:0;right:0;background:rgba(0,216,204,.06);border-top:1px solid rgba(0,216,204,.18);border-bottom:1px solid rgba(0,216,204,.18);pointer-events:none;display:none;transition:top .07s}
+#editor{width:100%;height:100%;background:var(--bg);color:#b4d0e8;font-family:var(--mono);font-size:11.5px;line-height:1.65;padding:10px 12px;border:none;outline:none;resize:none;caret-color:var(--amber);tab-size:4;white-space:pre}
+#editor::selection{background:rgba(240,168,0,.14)}
+#qref{border-top:1px solid var(--border);background:var(--bg1);padding:7px 10px;flex-shrink:0;overflow:hidden;max-height:104px}
+.qr{display:flex;gap:6px;font-size:9px;line-height:1.7}
+.qr-op{color:var(--amber);min-width:70px}
+.qr-d{color:var(--text2)}
+/* CENTER */
+#p-ctr{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:280px}
+/* Registers */
+#regs{padding:8px 11px 7px;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
+#rg{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:6px}
+.rc{background:var(--bg2);border:1px solid var(--border);border-radius:3px;padding:4px 4px 3px;min-width:0;transition:border-color .18s,background .18s,box-shadow .18s}
+.rc.hi{border-color:var(--green3);background:rgba(0,80,36,.06)}
+.rc.sh{border-color:var(--red2);background:rgba(100,0,20,.09);box-shadow:0 0 5px rgba(255,50,72,.1)}
+.rc.sa{border-color:var(--cyan);background:rgba(0,160,150,.05)}
+.rn{font-size:8px;color:var(--text2);font-family:var(--sans);font-weight:500;margin-bottom:1px}
+.rv{font-size:11.5px;font-weight:500;color:var(--text3);word-break:break-all;line-height:1.1;margin-bottom:2px}
+.rcs{display:flex;flex-wrap:wrap;gap:2px;min-height:9px;margin-bottom:1px}
+.dc{width:8px;height:8px;border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:700;font-family:var(--mono);border:1px solid transparent;cursor:default;transition:background .18s}
+.dc.z{background:var(--border);border-color:transparent;color:var(--text4)}
+.dc.p{background:rgba(0,200,100,.18);border-color:rgba(0,200,100,.35);color:var(--green)}
+.dc.s{background:rgba(255,50,72,.24);border-color:rgba(255,50,72,.45);color:var(--red)}
+.rst{font-size:7px;color:var(--red);display:none}
+/* Flags */
+#fb{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fg{display:flex;align-items:center;gap:3px}
+.fn{font-size:8px;color:var(--text2);font-family:var(--sans);font-weight:500;letter-spacing:.04em}
+.fl{width:18px;height:16px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);transition:all .14s}
+.fl.on{background:var(--amberDim);border-color:var(--amber3);color:var(--amber);box-shadow:0 0 4px rgba(240,168,0,.18)}
+.fl.son{background:var(--redGlow);border-color:var(--red2);color:var(--red);box-shadow:0 0 5px rgba(255,50,72,.22)}
+.fl.gon{background:var(--greenGlow);border-color:var(--green3);color:var(--green)}
+#sts{margin-left:auto;display:flex;align-items:center;gap:10px}
+.si{font-size:9px}.si b{color:var(--amber);margin-right:2px}
+/* Substrate strip */
+#ss{display:none;padding:5px 11px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0}
+#ss.on{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sk{display:flex;align-items:baseline;gap:5px;font-size:9px}
+.sk-l{color:var(--text2);font-family:var(--sans)}
+.sk-v{color:var(--cyan);font-family:var(--mono)}
+.sk-v.am{color:var(--amber)}.sk-v.re{color:var(--red)}.sk-v.dm{color:var(--text2);font-size:8px}
+/* Golay viz */
+#gv{display:none;padding:5px 11px 6px;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
+#gv.on{display:block}
+#gv-lbl{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+#gv-svg{width:100%;height:46px;overflow:visible}
+/* Triad activation panel */
+#triad{padding:5px 11px 7px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,var(--bg2),var(--bg1));flex-shrink:0}
+#triad-lbl{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+#triad-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tlmp{flex:1;min-width:96px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 6px 5px 6px;border:1px solid var(--border2);border-radius:3px;background:var(--bg);position:relative;transition:all .2s ease}
+.tlmp .tl-dot{width:8px;height:8px;border-radius:50%;background:var(--text4);box-shadow:0 0 0 0 transparent;transition:all .25s ease;margin-bottom:1px}
+.tlmp.on .tl-dot{background:var(--green);box-shadow:0 0 7px 0 var(--greenGlow),0 0 2px 0 var(--green)}
+.tlmp.full .tl-dot{background:var(--amber);box-shadow:0 0 9px 0 var(--amberGlow),0 0 3px 0 var(--amber)}
+.tlmp .tl-name{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--text2)}
+.tlmp.on .tl-name{color:var(--green)}
+.tlmp.full .tl-name{color:var(--amber)}
+.tlmp .tl-meta{font-size:7.5px;color:var(--text2);font-family:var(--mono);text-align:center;line-height:1.25}
+.tlmp.on .tl-meta{color:var(--text)}
+.tlmp.full{border-color:var(--amber3);background:linear-gradient(180deg,var(--bg),var(--amberDim))}
+.tl-arr{font-size:11px;color:var(--text4);font-weight:700}
+#triad.armed .tl-arr{color:var(--amber2)}
+/* Error bar */
+#errbar{display:none;padding:5px 11px;font-size:10px;color:var(--red);background:rgba(100,0,24,.12);border-bottom:1px solid var(--red2);flex-shrink:0}
+#errbar.on{display:block}
+/* Terminal */
+#term-sec{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#term-hdr{display:flex;align-items:center;gap:7px;padding:4px 11px;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
+#term-hdr .slbl{flex:1}
+.tctrl{padding:2px 7px;border-radius:2px;border:1px solid var(--border);background:transparent;font-size:9px;color:var(--text2);cursor:pointer;font-family:var(--mono);transition:all .1s}
+.tctrl:hover{border-color:var(--border2);color:var(--text)}
+#tout{flex:1;overflow-y:auto;padding:8px 12px;font-size:10.5px;line-height:1.72;color:var(--text3);background:var(--bg);white-space:pre-wrap;word-break:break-word}
+.t-bn{color:var(--text2)}.t-pr{color:var(--amber2)}.t-ou{color:#a8e8c0}.t-in{color:var(--text2)}.t-sb{color:var(--cyan)}.t-er{color:var(--red)}.t-st{color:var(--cyan);font-size:10px}.t-wn{color:#c89800}.t-lb{color:var(--text2);font-family:var(--sans);font-size:9px}.t-sp{color:var(--border2)}
+#tinr{display:flex;align-items:center;border-top:1px solid var(--border);background:var(--bg1);flex-shrink:0;padding:0 0 0 11px}
+#tprl{color:var(--amber);font-size:11px;font-weight:500;white-space:nowrap;user-select:none;padding-right:3px}
+#tinput{flex:1;background:transparent;border:none;outline:none;color:var(--amber);font-family:var(--mono);font-size:11px;padding:7px 6px;caret-color:var(--amber)}
+#tinput::placeholder{color:var(--text4);font-style:italic}
+#tsend{padding:0 12px;height:34px;background:transparent;border-left:1px solid var(--border);border-top:0;border-right:0;border-bottom:0;color:var(--text2);cursor:pointer;font-size:9px;font-family:var(--mono);transition:all .1s}
+#tsend:hover{color:var(--amber);background:var(--amberDim)}
+/* RIGHT PANEL */
+#p-rt{width:260px;min-width:190px;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;flex-shrink:0}
+#rtabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg1);flex-shrink:0}
+.rtab{flex:1;padding:6px 2px;text-align:center;font-size:8px;font-weight:500;letter-spacing:.1em;color:var(--text2);cursor:pointer;font-family:var(--sans);border-bottom:2px solid transparent;transition:all .12s;text-transform:uppercase}
+.rtab.active{color:var(--amber);border-bottom-color:var(--amber)}
+#rcontent{flex:1;overflow-y:auto}
+/* Mem tab */
+#m-tab{padding:6px 8px}
+.mr{display:flex;gap:2px;align-items:baseline;margin-bottom:1px;font-size:8px;line-height:1.6}
+.ma{color:var(--text2);min-width:26px;font-family:var(--mono)}
+.mc{min-width:15px;text-align:right;color:var(--text2);font-family:var(--mono);transition:color .12s}
+.mc.nz{color:var(--amber)}.mc.ch{color:var(--cyan)}
+/* ISA tab */
+#i-tab{padding:8px 9px;font-size:9px;display:none}
+.is{margin-bottom:9px}
+.is-t{font-size:7.5px;letter-spacing:.14em;color:var(--text2);font-family:var(--sans);font-weight:600;margin-bottom:3px;text-transform:uppercase}
+.ir{display:flex;gap:4px;line-height:1.7;border-bottom:1px solid var(--text4);padding:1px 0}
+.ir-o{color:var(--amber);min-width:60px;font-weight:500}.ir-f{color:var(--text);flex:1}.ir-fl{color:var(--text2);font-size:8px;text-align:right;min-width:44px}
+/* Trace tab */
+#tr-tab{padding:6px 8px;display:none}
+.trow{display:flex;gap:5px;font-size:8px;line-height:1.7;border-bottom:1px solid var(--text4)}
+.trpc{color:var(--amber2);min-width:26px}.trop{color:var(--text3);flex:1;font-size:8px}.trfl{color:var(--text2);font-size:7px}
+/* ═══ DOCS MODAL ═══ */
+#docs-modal{
+  display:none;position:fixed;inset:0;z-index:8000;
+  background:rgba(2,4,6,.92);overflow-y:auto;
+  font-family:var(--sans);
+}
+#docs-modal.open{display:block}
+#docs-inner{
+  max-width:900px;margin:0 auto;padding:40px 40px 80px;
+}
+#docs-close{
+  position:fixed;top:16px;right:20px;
+  padding:6px 16px;border-radius:4px;border:1px solid var(--amber3);
+  background:var(--amberDim);color:var(--amber);font-family:var(--mono);font-size:10px;
+  cursor:pointer;letter-spacing:.1em;transition:all .14s;z-index:8001;
+}
+#docs-close:hover{background:var(--amberGlow)}
+.doc-hero{margin-bottom:40px;padding-bottom:32px;border-bottom:1px solid var(--border2)}
+.doc-title{font-size:28px;font-weight:600;color:var(--amber);letter-spacing:.04em;margin-bottom:6px}
+.doc-subtitle{font-size:14px;color:var(--text2);font-weight:300;letter-spacing:.06em}
+.doc-meta{font-size:11px;color:var(--text2);margin-top:8px}
+.doc-meta a{color:var(--cyan)}
+.doc-toc{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:16px 20px;margin-bottom:36px}
+.doc-toc-title{font-size:10px;letter-spacing:.16em;color:var(--text2);font-weight:600;margin-bottom:10px;text-transform:uppercase}
+.doc-toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.doc-toc a{color:var(--cyan);font-size:12px;text-decoration:none}
+.doc-toc a:hover{color:var(--amber)}
+.doc-h1{font-size:20px;font-weight:600;color:var(--amber);margin:36px 0 12px;padding-top:10px;border-top:1px solid var(--border2);letter-spacing:.02em}
+.doc-h2{font-size:15px;font-weight:600;color:var(--text3);margin:24px 0 8px;letter-spacing:.02em}
+.doc-h3{font-size:12px;font-weight:500;color:var(--cyan);margin:18px 0 6px;letter-spacing:.04em;text-transform:uppercase}
+.doc-p{font-size:13px;color:var(--text);line-height:1.78;margin-bottom:10px}
+.doc-p b{color:var(--text3)}
+.doc-code{
+  display:block;background:var(--bg2);border:1px solid var(--border);border-radius:3px;
+  padding:12px 16px;font-family:var(--mono);font-size:11px;color:#b0d8f0;
+  margin:10px 0;overflow-x:auto;white-space:pre;line-height:1.6;
+}
+.doc-code .c{color:var(--text2)}.doc-code .k{color:var(--amber)}.doc-code .n{color:var(--green)}.doc-code .s{color:var(--red)}
+.doc-inline{font-family:var(--mono);font-size:11px;color:var(--cyan);background:var(--bg2);padding:1px 5px;border-radius:2px}
+.doc-table{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0;font-family:var(--mono)}
+.doc-table th{padding:6px 10px;border:1px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:10px;letter-spacing:.08em;text-align:left;font-family:var(--sans);font-weight:600;text-transform:uppercase}
+.doc-table td{padding:5px 10px;border:1px solid var(--border);color:var(--text)}
+.doc-table tr:nth-child(even) td{background:rgba(255,255,255,.014)}
+.doc-table .phen{color:var(--green)}.doc-table .shad{color:var(--red)}.doc-table .am{color:var(--amber)}
+.doc-note{background:rgba(0,216,204,.05);border-left:3px solid var(--cyan);border-radius:0 3px 3px 0;padding:10px 14px;margin:14px 0;font-size:12px;color:var(--text)}
+.doc-warn{background:rgba(255,50,72,.06);border-left:3px solid var(--red2);border-radius:0 3px 3px 0;padding:10px 14px;margin:14px 0;font-size:12px;color:var(--text)}
+.doc-rule{border:none;border-top:1px solid var(--border2);margin:28px 0}
+.disp-bars{display:flex;align-items:flex-end;gap:6px;height:60px;margin:12px 0}
+.db{display:flex;flex-direction:column;align-items:center;gap:2px}
+.db-bar{width:22px;border-radius:2px 2px 0 0}
+.db-lbl{font-family:var(--mono);font-size:8px}
+.doc-kv{display:flex;gap:8px;font-size:12px;margin:2px 0}
+.doc-k{color:var(--text2);min-width:90px;font-family:var(--mono)}.doc-v{color:var(--text3)}
+.doc-chip{display:inline-block;background:var(--bg2);border:1px solid var(--border);border-radius:2px;padding:1px 6px;font-size:10px;font-family:var(--mono);color:var(--amber);margin:1px}
+
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div id="hdr">
+  <div style="display:flex;flex-direction:column;line-height:1.1;gap:1px;margin-right:4px">
+    <div class="logo-main">NoiseCore VM</div>
+    <div class="logo-sub">Golay·Leech·Monster·BW256 · v1.3.0 TRIAD</div>
+  </div>
+  <div class="hsep"></div>
+  <button class="mpill active" id="btn-plain" onclick="setMode('plain')"><div class="mdot"></div>PLAIN</button>
+  <button class="mpill" id="btn-sub" onclick="setMode('substrate')"><div class="mdot"></div>SUBSTRATE</button>
+  <div class="hsep"></div>
+  <button class="cbtn run" id="run-btn" onclick="doRun()" title="Run program (Ctrl+Enter)">&#9654; RUN</button>
+  <button class="cbtn step" id="step-btn" onclick="doStep()" title="Step one instruction">&#8883; STEP</button>
+  <button class="cbtn rst" onclick="doReset()" title="Reset CPU">&#8634; RESET</button>
+  <button class="cbtn docs" onclick="openDocs()">&#9783; DOCS</button>
+  <div id="hdr-r">
+    <button class="tbtn" id="tbtn" onclick="toggleTrace()" title="Record full instruction trace">&#9672; TRACE</button>
+    <div id="stat-chip">READY</div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div id="main">
+
+  <!-- EDITOR -->
+  <div id="p-ed">
+    <div id="ed-top">
+      <span class="slbl">EDITOR</span>
+      <select id="ex-sel" onchange="loadEx(this.value)">
+        <option value="">&#8212; example &#8212;</option>
+        <option value="hello">01 &#183; hello world</option>
+        <option value="factorial_iter">02 &#183; factorial iterative</option>
+        <option value="factorial_rec">03 &#183; factorial recursive</option>
+        <option value="bubble_sort">04 &#183; bubble sort</option>
+        <option value="prime_sieve">05 &#183; prime sieve</option>
+        <option value="fibonacci">06 &#183; fibonacci</option>
+        <option value="gcd">07 &#183; euclidean GCD</option>
+        <option value="string_rev">08 &#183; string reverse</option>
+        <option value="shadow_probe">09 &#183; shadow probe</option>
+        <option value="binding_work">10 &#183; nucleon binding</option>
+        <option value="leech_octad">11 &#183; LEECH octad lift</option>
+        <option value="leech_health">12 &#183; LEECH ontological health</option>
+        <option value="triad_activate">13 &#183; TRIAD activation</option>
+        <option value="bw_audit">14 &#183; BARNES-WALL 256 audit</option>
+        <option value="monster_walk">15 &#183; MONSTER 26 sporadics</option>
+        <option value="particle_physics">16 &#183; particle physics</option>
+        <option value="lattice_probe">17 &#183; lattice probe</option>
+        <option value="higher_math">18 &#183; higher mathematics</option>
+        <option value="triad_demo">19 &#183; TRIAD full demo</option>
+      </select>
+    </div>
+    <div id="ed-wrap">
+      <div id="step-hl"></div>
+      <textarea id="editor" spellcheck="false"></textarea>
+    </div>
+    <div id="qref">
+      <div class="slbl" style="margin-bottom:4px">QUICK REF</div>
+      <div class="qr"><span class="qr-op">LOAD R0, #42</span><span class="qr-d">load immediate into register</span></div>
+      <div class="qr"><span class="qr-op">ADD R2, R0, R1</span><span class="qr-d">R2 = R0+R1 &#9733; SubstrateALU</span></div>
+      <div class="qr"><span class="qr-op">MUL/DIV/MOD</span><span class="qr-d">&#9733; base-12 long-mul / Knuth D</span></div>
+      <div class="qr"><span class="qr-op">SYSCALL 1</span><span class="qr-d">print R0 as integer</span></div>
+      <div class="qr"><span class="qr-op">SYSCALL 2</span><span class="qr-d">print R0 as character</span></div>
+      <div class="qr"><span class="qr-op">SYSCALL 6</span><span class="qr-d">print newline</span></div>
+      <div class="qr"><span class="qr-op">SYSCALL 7</span><span class="qr-d">dump all registers + flags</span></div>
+      <div class="qr"><span class="qr-op">CLRS</span><span class="qr-d">clear S (Shadow) flag only</span></div>
+      <div class="qr"><span class="qr-op">HALT</span><span class="qr-d">stop execution</span></div>
+    </div>
+  </div>
+
+  <div class="rzr" id="rzr-l"></div>
+
+  <!-- CENTER -->
+  <div id="p-ctr">
+
+    <!-- Registers -->
+    <div id="regs">
+      <div id="rg"></div>
+      <div id="fb">
+        <div class="fg"><span class="fn" title="Zero: result == 0">Z</span><div class="fl" id="flZ">0</div></div>
+        <div class="fg"><span class="fn" title="Negative: result < 0">N</span><div class="fl" id="flN">0</div></div>
+        <div class="fg"><span class="fn" title="Carry/Borrow from last ADD/SUB">C</span><div class="fl" id="flC">0</div></div>
+        <div class="fg"><span class="fn" title="Signed Overflow">V</span><div class="fl" id="flV">0</div></div>
+        <div class="fg"><span class="fn" title="Shadow flag: latches when any digit > 4 crosses Voronoi boundary">S</span><div class="fl" id="flS">0</div></div>
+        <div id="sts">
+          <span class="si"><b>PC</b><span id="v-pc">0000</span></span>
+          <span class="si"><b>CYC</b><span id="v-cyc">&#8212;</span></span>
+          <span class="si"><b>IPS</b><span id="v-ips">&#8212;</span></span>
+          <span class="si" id="hash-si" style="display:none"><b>HASH</b><span id="v-hash" style="font-size:8px;color:var(--text2)">&#8212;</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Substrate strip (visible in substrate mode) -->
+    <div id="ss">
+      <div class="sk"><span class="sk-l">NRCI</span><span class="sk-v am" id="sv-nrci">0.7692</span></div>
+      <div class="sk"><span class="sk-l">carry_work</span><span class="sk-v" id="sv-cw">0</span></div>
+      <div class="sk"><span class="sk-l">shadow_regs</span><span class="sk-v re" id="sv-sr">&#8212;</span></div>
+      <div class="sk"><span class="sk-l">mag_sha16</span><span class="sk-v dm" id="sv-sha">&#8212;</span></div>
+    </div>
+
+    <!-- Golay displacement visualizer (visible in substrate mode) -->
+    <div id="gv">
+      <div id="gv-lbl">
+        <span class="slbl">GOLAY DISPLACEMENT CURVE &#183; PERFECT_V1 &#183; digits 0&#8211;11</span>
+        <span style="font-size:7px;color:var(--text2);margin-left:6px">elastic limit at digit &#8804; 4 &#183; active digits highlighted</span>
+      </div>
+      <svg id="gv-svg" viewBox="0 0 500 56" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <!-- Triad activation panel (always visible) -->
+    <div id="triad">
+      <div id="triad-lbl">
+        <span class="slbl">TRIAD ACTIVATION &#183; Golay [24,12,8] &#8594; Leech &#923;₂₄ &#8594; Monster M</span>
+      </div>
+      <div id="triad-row">
+        <div class="tlmp" id="tl-golay">
+          <div class="tl-dot"></div>
+          <div class="tl-name">GOLAY</div>
+          <div class="tl-meta" id="tl-golay-m">759 octads &#183; NRCI 0.7692</div>
+        </div>
+        <div class="tl-arr">&#8594;</div>
+        <div class="tlmp" id="tl-leech">
+          <div class="tl-dot"></div>
+          <div class="tl-name">LEECH &#923;₂₄</div>
+          <div class="tl-meta" id="tl-leech-m">k=196,560 &#183; |p|²=32</div>
+        </div>
+        <div class="tl-arr">&#8594;</div>
+        <div class="tlmp" id="tl-monster">
+          <div class="tl-dot"></div>
+          <div class="tl-name">MONSTER M</div>
+          <div class="tl-meta" id="tl-monster-m">26 sporadics &#183; rep 196,883</div>
+        </div>
+        <div class="tl-arr">&#8901;</div>
+        <div class="tlmp" id="tl-bw">
+          <div class="tl-dot"></div>
+          <div class="tl-name">BW-256</div>
+          <div class="tl-meta" id="tl-bw-m">macro-NRCI &#183; —</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error bar -->
+    <div id="errbar"></div>
+
+    <!-- Terminal -->
+    <div id="term-sec">
+      <div id="term-hdr">
+        <span class="slbl">TERMINAL</span>
+        <button class="tctrl" onclick="tClear()">CLEAR</button>
+        <button class="tctrl" onclick="tHelp()">HELP</button>
+      </div>
+      <div id="tout"></div>
+      <div id="tinr">
+        <span id="tprl">ncavm&gt;&nbsp;</span>
+        <input id="tinput" type="text" autocomplete="off" spellcheck="false"
+               placeholder="type 'help' or use Ctrl+Enter to run"
+               onkeydown="tKey(event)">
+        <button id="tsend" onclick="tSubmit()">ENTER</button>
+      </div>
+    </div>
+
+  </div><!-- /p-ctr -->
+
+  <div class="rzr" id="rzr-r"></div>
+
+  <!-- RIGHT TABS -->
+  <div id="p-rt">
+    <div id="rtabs">
+      <div class="rtab active" onclick="showRTab('mem')">Memory</div>
+      <div class="rtab" onclick="showRTab('isa')">ISA</div>
+      <div class="rtab" onclick="showRTab('trace')">Trace</div>
+    </div>
+    <div id="rcontent">
+      <div id="m-tab"></div>
+      <div id="i-tab"></div>
+      <div id="tr-tab"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ═══ DOCS MODAL ═══ -->
+<div id="docs-modal">
+  <button id="docs-close" onclick="closeDocs()">&#215; CLOSE DOCS</button>
+  <div id="docs-inner"></div>
+</div>
+
+<script>
+
+'use strict';
+// ─── SHA-256 (pure JS, synchronous) ───────────────────────────────────────
+const SHA256=(()=>{
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const r=(n,k)=>(n>>>k)|(n<<(32-k));
+  function hash(str){
+    const b=[...new TextEncoder().encode(str)],L=b.length*8;
+    b.push(0x80);while(b.length%64!==56)b.push(0);
+    for(let i=3;i>=0;i--)b.push((L>>>(i*8))&0xff);b.push(0,0,0,0);
+    let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a,h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+    for(let i=0;i<b.length;i+=64){
+      const w=[];for(let j=0;j<16;j++)w.push((b[i+j*4]<<24)|(b[i+j*4+1]<<16)|(b[i+j*4+2]<<8)|b[i+j*4+3]);
+      for(let j=16;j<64;j++){const s0=r(w[j-15],7)^r(w[j-15],18)^(w[j-15]>>>3);const s1=r(w[j-2],17)^r(w[j-2],19)^(w[j-2]>>>10);w.push((w[j-16]+s0+w[j-7]+s1)|0);}
+      let[a,b2,c,d,e,f,g,h]=[h0,h1,h2,h3,h4,h5,h6,h7];
+      for(let j=0;j<64;j++){const S1=r(e,6)^r(e,11)^r(e,25);const ch=(e&f)^(~e&g);const t1=(h+S1+ch+K[j]+w[j])|0;const S0=r(a,2)^r(a,13)^r(a,22);const maj=(a&b2)^(a&c)^(b2&c);const t2=(S0+maj)|0;h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;}
+      h0=(h0+a)|0;h1=(h1+b2)|0;h2=(h2+c)|0;h3=(h3+d)|0;h4=(h4+e)|0;h5=(h5+f)|0;h6=(h6+g)|0;h7=(h7+h)|0;
+    }
+    return[h0,h1,h2,h3,h4,h5,h6,h7].map(n=>(n>>>0).toString(16).padStart(8,'0')).join('');
+  }
+  return{hash};
+})();
+
+// ─── GOLAY CODE ENGINE ────────────────────────────────────────────────────
+// Extended Binary Golay Code [24,12,8]. Generator G=[I_12|A].
+// Standard symmetric 12x12 A matrix. PERFECT_V1=0x307F: hw=9.
+// Baseline syndrome weight computed once at load time.
+// Displacement table matches manual §8.2 specification exactly.
+// NRCI = 10/(10+|hw-12|) = 10/13 ≈ 0.769231 (LAW_SHADOW_PROCESSOR_001)
+const GolayEngine=(()=>{
+  const A=[[0,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,0,1,1,1,0,0,0,1,0],[1,1,0,1,1,1,0,0,0,1,0,1],[1,0,1,1,1,0,0,0,1,0,1,1],[1,1,1,1,0,0,0,1,0,1,1,0],[1,1,1,0,0,0,1,0,1,1,0,1],[1,1,0,0,0,1,0,1,1,0,1,1],[1,0,0,0,1,0,1,1,0,1,1,1],[1,0,0,1,0,1,1,0,1,1,1,0],[1,0,1,0,1,1,0,1,1,1,0,0],[1,1,0,1,1,0,1,1,1,0,0,0],[1,0,1,1,0,1,1,1,0,0,0,1]];
+  const PERFECT_V1=0x307F;
+  const hw=n=>{let c=0;n=n>>>0;while(n){c+=n&1;n>>>=1;}return c;};
+  function synWt(word){
+    const info=[],par=[];for(let i=0;i<12;i++){info.push((word>>>i)&1);par.push((word>>>(i+12))&1);}
+    let sw=0;for(let row=0;row<12;row++){let s=0;for(let col=0;col<12;col++)s^=A[row][col]*info[col];s^=par[row];sw+=s;}
+    return sw;
+  }
+  // Perturbation masks producing displacement curve from §8.2:
+  // d0=0, d1=1, d2=2, d3=3, d4=4 (elastic limit), d5=1, d6=4, d7-11=real Golay
+  const MASKS=[0,1<<12,(1<<12)|(1<<13),(1<<12)|(1<<13)|(1<<14),(1<<12)|(1<<13)|(1<<14)|(1<<18),
+    1<<15,(1<<12)|(1<<14)|(1<<18)|(1<<23),(1<<12)|(1<<15),(1<<13)|(1<<15),
+    (1<<12)|(1<<13)|(1<<14)|(1<<15),(1<<14)|(1<<15),(1<<12)|(1<<13)|(1<<15)|(1<<18)];
+  const baseSW=synWt(PERFECT_V1);
+  const HW=hw(PERFECT_V1);
+  const DISP=MASKS.map(m=>Math.abs(synWt(PERFECT_V1^m)-baseSW));
+  const SMC=[true,true,true,true,true,false,false,false,false,false,false,false];
+  const NRCI=10/(10+Math.abs(HW-12));
+  return{PERFECT_V1,HW,baseSW,NRCI,DISP,SMC,
+    dinfo:d=>({digit:d,disp:DISP[d],smc:SMC[d],regime:d<=4?'Phenomenal':'Shadow'}),
+    info:()=>({vector:'0x'+PERFECT_V1.toString(16).toUpperCase(),hw:HW,baseSW,nrci:NRCI,disp:DISP,smc:SMC})
+  };
+})();
+
+// ─── SUBSTRATE ALU ────────────────────────────────────────────────────────
+// LAW_SUBSTRATE_ALU_001: ADD/SUB  — max intermediate 23 (11+11+1)
+// LAW_SUBSTRATE_ALU_002: MUL      — max inner 143 (11+11×11+11)
+// LAW_SUBSTRATE_ALU_003: DIV/MOD  — Knuth D base-12, ≤2 adj per digit
+// LAW_SUBSTRATE_ALU_004: Bitwise  — cell-read → op → write_from_alu
+// LAW_CARRY_WORK_001:    base-4 carry events (standalone utility)
+const BALU=(()=>{
+  const td=n=>{n=Math.abs(Math.round(n));if(!n)return[0];const d=[];while(n){d.push(n%12);n=Math.floor(n/12);}return d;};
+  const fd=d=>{let n=0;for(let i=d.length-1;i>=0;i--)n=n*12+d[i];return n;};
+  const trim=d=>{while(d.length>1&&!d[d.length-1])d.pop();return d;};
+  const cmp=(a,b)=>{if(a.length!==b.length)return a.length-b.length;for(let i=a.length-1;i>=0;i--)if(a[i]!==b[i])return a[i]-b[i];return 0;};
+  function addD(da,db){
+    const r=[];let c=0,ce=0;
+    for(let i=0,n=Math.max(da.length,db.length)+1;i<n;i++){
+      const s=(i<da.length?da[i]:0)+(i<db.length?db[i]:0)+c;
+      if(s>=12){c=1;r.push(s-12);ce++;}else{c=0;r.push(s);}
+    }
+    return{d:trim(r),co:c,ce};
+  }
+  function subD(da,db){
+    const r=[];let bw=0,be=0;
+    for(let i=0;i<da.length;i++){
+      let s=(da[i])-(i<db.length?db[i]:0)-bw;
+      if(s<0){s+=12;bw=1;be++;}else bw=0;r.push(s);
+    }
+    return{d:trim(r),bw,be};
+  }
+  function signedAdd(mA,nA,mB,nB){
+    const da=td(mA),db=td(mB);
+    if(nA===nB){const r=addD(da,db);return{d:r.d,ce:r.ce,neg:nA};}
+    const c=cmp(da,db);
+    if(!c)return{d:[0],ce:0,neg:false};
+    const big=c>0?da:db,sml=c>0?db:da;
+    const r=subD(big,sml);return{d:r.d,ce:r.be,neg:c>0?nA:nB};
+  }
+  function mulD(da,db){
+    const res=new Array(da.length+db.length).fill(0);
+    for(let i=0;i<da.length;i++){
+      let c=0;
+      for(let j=0;j<db.length;j++){const p=da[i]*db[j]+res[i+j]+c;res[i+j]=p%12;c=Math.floor(p/12);}
+      let pos=i+db.length;while(c){const s=res[pos]+c;res[pos]=s%12;c=Math.floor(s/12);pos++;}
+    }
+    return trim(res);
+  }
+  const mByInt=(d,x)=>{const r=[];let c=0;for(const v of d){const p=v*x+c;r.push(p%12);c=Math.floor(p/12);}if(c)r.push(c);return r;};
+  const dByInt=(d,x)=>{const r=[];let rem=0;for(let i=d.length-1;i>=0;i--){const cur=rem*12+d[i];r.unshift(Math.floor(cur/x));rem=cur%x;}return trim(r);};
+  function divmodD(da,db){
+    const u=[...da],v=[...db];trim(u);trim(v);
+    if(v.length===1&&!v[0])throw new Error('DivisionByZero');
+    const c=cmp(u,v);if(c<0)return{q:[0],r:[...u]};if(!c)return{q:[1],r:[0]};
+    const n=v.length,m=u.length-n,dn=Math.floor(12/(v[n-1]+1));
+    const U=mByInt(u,dn),V=mByInt(v,dn);
+    while(U.length<m+n+1)U.push(0);while(V.length<n)V.push(0);
+    const Q=new Array(m+1).fill(0);
+    for(let j=m;j>=0;j--){
+      const un=j+n<U.length?U[j+n]:0,un1=j+n-1<U.length?U[j+n-1]:0,un2=j+n-2>=0&&j+n-2<U.length?U[j+n-2]:0;
+      const vn=V[n-1],vn2=n>=2?V[n-2]:0;
+      let qh=Math.min(Math.floor((un*12+un1)/vn),11),rh=(un*12+un1)-qh*vn;
+      for(let k=0;k<2;k++){if(rh>=12)break;if(qh*vn2>12*rh+un2){qh--;rh+=vn;}else break;}
+      let bw=0;
+      for(let i=0;i<=n;i++){
+        const vi=i<V.length?V[i]:0,idx=j+i,ui=idx<U.length?U[idx]:0;
+        const p=qh*vi+bw,d2=ui-(p%12);
+        if(d2<0){if(idx<U.length)U[idx]=d2+12;else U.push(d2+12);bw=Math.floor(p/12)+1;}
+        else{if(idx<U.length)U[idx]=d2;else if(d2)U.push(d2);bw=Math.floor(p/12);}
+      }
+      if(bw){qh--;let c2=0;for(let i=0;i<=n;i++){const vi=i<V.length?V[i]:0,idx=j+i,s=(idx<U.length?U[idx]:0)+vi+c2;if(idx<U.length)U[idx]=s%12;else U.push(s%12);c2=Math.floor(s/12);}}
+      Q[j]=qh;
+    }
+    let rem=U.slice(0,n);if(dn>1)rem=dByInt(rem,dn);trim(Q);trim(rem);
+    return{q:Q,r:rem};
+  }
+  function base4C(a,b){a=Math.abs(Math.round(a));b=Math.abs(Math.round(b));let n=0,c=0;while(a||b||c){const s=(a%4)+(b%4)+c;if(s>=4){n++;c=1;}else c=0;a=Math.floor(a/4);b=Math.floor(b/4);}return n;}
+  return{td,fd,addD,subD,signedAdd,mulD,divmodD,base4C,cmp};
+})();
+
+// ═════════════════════════════════════════════════════════════════════════
+// ═══ UBP TRIAD EXTENSIONS — LEECH Λ₂₄ · MONSTER · BARNES-WALL 256 ═══════
+// ═════════════════════════════════════════════════════════════════════════
+// Adapted from ubp_core_v5_3_merged.py + ubp_barnes_wall.py (E R A Craig).
+// All three engines build on the existing GolayEngine [24,12,8].
+//   • LeechEngine        — Λ₂₄ lattice operations, octad lifting, symmetry tax
+//   • MonsterEngine      — 26 sporadic simple groups + triad activation
+//   • BarnesWall          — 256D recursive |u|u+v| construction with snap decoder
+// All operations are float-tolerant (use JS Number) but exactly mirror the
+// integer-Fraction structure of the Python reference implementation.
+
+// ─── GOLAY OCTAD CACHE & EXTENDED ENCODE/DECODE ──────────────────────────
+// Compute the 759 weight-8 codewords once.  Used by Leech & Barnes-Wall.
+const GolayExt=(()=>{
+  const A=[[0,1,1,1,1,1,1,1,1,1,1,1],[1,1,1,0,1,1,1,0,0,0,1,0],[1,1,0,1,1,1,0,0,0,1,0,1],[1,0,1,1,1,0,0,0,1,0,1,1],[1,1,1,1,0,0,0,1,0,1,1,0],[1,1,1,0,0,0,1,0,1,1,0,1],[1,1,0,0,0,1,0,1,1,0,1,1],[1,0,0,0,1,0,1,1,0,1,1,1],[1,0,0,1,0,1,1,0,1,1,1,0],[1,0,1,0,1,1,0,1,1,1,0,0],[1,1,0,1,1,0,1,1,1,0,0,0],[1,0,1,1,0,1,1,1,0,0,0,1]];
+  function encode(msg12){
+    const cw=new Array(24).fill(0);
+    for(let i=0;i<12;i++)cw[i]=msg12[i]&1;
+    for(let j=0;j<12;j++){let s=0;for(let i=0;i<12;i++)s^=(msg12[i]&1)&A[i][j];cw[12+j]=s;}
+    return cw;
+  }
+  function syndrome(v24){
+    const s=new Array(12).fill(0);
+    for(let j=0;j<12;j++){let acc=0;for(let i=0;i<12;i++)acc^=A[i][j]&v24[i];s[j]=acc^v24[12+j];}
+    return s;
+  }
+  function hw(v){let c=0;for(const x of v)c+=x?1:0;return c;}
+  let _octads=null,_words=null;
+  function allCodewords(){
+    if(_words)return _words;
+    const out=[];
+    for(let i=0;i<4096;i++){const m=[];for(let k=0;k<12;k++)m.push((i>>k)&1);out.push(encode(m));}
+    _words=out;return out;
+  }
+  function octads(){
+    if(_octads)return _octads;
+    _octads=allCodewords().filter(cw=>hw(cw)===8);
+    return _octads;
+  }
+  // 4 "canonical" Mathieu-flavored octads useful as physics seeds
+  function namedOctad(name){
+    const o=octads();
+    const map={GROUND:0,FIRE:42,WATER:137,AETHER:759-1};
+    return o[(map[name]!=null?map[name]:0)%o.length];
+  }
+  return{A,encode,syndrome,hw,allCodewords,octads,namedOctad};
+})();
+
+// ─── LEECH LATTICE Λ₂₄ ENGINE ────────────────────────────────────────────
+// Lifts Golay octads (24-bit binary) into 24-D points whose squared norm
+// (in scaled coords) is always 32.  Provides symmetry tax (LAW_SYMMETRY_001),
+// stability ranking, ontological health (Reality/Info/Activation/Potential).
+const LeechEngine=(()=>{
+  const DIM=24,SCALE=8,KISSING=196560;
+  const Y=1/(Math.PI+2/Math.PI);          // ≈ 0.2647
+  const Y_INV=Math.PI+2/Math.PI;          // ≈ 3.7782
+  // Expand a weight-8 Golay octad into 128 lattice points ("octad shell").
+  // Active bits become ±2 with an EVEN number of minuses; squared norm = 32.
+  function expandOctad(octad){
+    const active=[];for(let i=0;i<24;i++)if(octad[i])active.push(i);
+    if(active.length!==8)throw new Error('expandOctad: not a weight-8 octad (got hw='+active.length+')');
+    const pts=[];
+    for(let mask=0;mask<256;mask++){
+      let neg=0;for(let b=0;b<8;b++)if((mask>>b)&1)neg++;
+      if(neg&1)continue;
+      const p=new Array(24).fill(0);
+      for(let b=0;b<8;b++)p[active[b]]=((mask>>b)&1)?-2:2;
+      pts.push(p);
+    }
+    return pts;
+  }
+  function normSqScaled(p){let s=0;for(const x of p)s+=x*x;return s;}
+  function normSq(p){return normSqScaled(p)/SCALE;}
+  // LAW_SYMMETRY_001: T_base = hw·Y + |p|²/8;  with optional volumetric rebate (1 - C/13)
+  function symmetryTax(p,compactness){
+    let h=0,ns=0;for(const x of p){if(x!==0)h++;ns+=x*x;}
+    let t=h*Y+ns/8;
+    if(compactness!=null)t=t*(1-compactness/13);
+    return t;
+  }
+  // LAW_SUBSTRATE_005: tetradic MOG partition
+  function ontologicalHealth(p){
+    const layers=['Reality','Info','Activation','Potential'],h={};
+    for(let i=0;i<4;i++){let s=0;for(let j=0;j<6;j++)s+=Math.abs(p[i*6+j]);h[layers[i]]=s/12;}
+    h.Global_NRCI=(h.Reality+h.Info+h.Activation+h.Potential)/4;
+    return h;
+  }
+  function rankByStability(pts){return pts.map(p=>({p,tax:symmetryTax(p)})).sort((a,b)=>a.tax-b.tax);}
+  // Find Golay octad that physically contains a 24-bit pattern (best match by hw).
+  function nearestOctadIdx(seed24){
+    const o=GolayExt.octads();let best=0,bestD=999;
+    for(let i=0;i<o.length;i++){let d=0;for(let k=0;k<24;k++)if(o[i][k]!==seed24[k])d++;if(d<bestD){bestD=d;best=i;if(d===0)break;}}
+    return{idx:best,distance:bestD};
+  }
+  function stats(){return{dimension:DIM,scale_factor:SCALE,kissing_number:KISSING,octads:GolayExt.octads().length,Y,Y_INV};}
+  return{DIM,SCALE,KISSING,Y,Y_INV,expandOctad,normSq,normSqScaled,symmetryTax,ontologicalHealth,rankByStability,nearestOctadIdx,stats};
+})();
+
+// ─── MONSTER GROUP & TRIAD ACTIVATION ────────────────────────────────────
+// All 26 sporadic simple groups (20 "Happy Family" + 6 pariahs).
+// Triad thresholds: Golay≥12 stable objects, Leech≥24, Monster≥26 sporadics.
+const MonsterEngine=(()=>{
+  const SPORADIC=[
+    {n:'M11',  ord:'7920',         o:7920,         hf:true,  role:'Mathieu'},
+    {n:'M12',  ord:'95040',        o:95040,        hf:true,  role:'Mathieu'},
+    {n:'M22',  ord:'443520',       o:443520,       hf:true,  role:'Mathieu'},
+    {n:'M23',  ord:'10200960',     o:10200960,     hf:true,  role:'Mathieu'},
+    {n:'M24',  ord:'244823040',    o:244823040,    hf:true,  role:'Mathieu — Golay automorphism'},
+    {n:'Co1',  ord:'4.16·10¹⁸',    o:4.157776806543e18, hf:true,  role:'Conway — Leech automorphism'},
+    {n:'Co2',  ord:'4.23·10¹³',    o:4.23e13,      hf:true,  role:'Conway'},
+    {n:'Co3',  ord:'4.96·10¹¹',    o:4.96e11,      hf:true,  role:'Conway'},
+    {n:'Fi22', ord:'6.46·10¹⁰',    o:6.46e10,      hf:true,  role:'Fischer'},
+    {n:'Fi23', ord:'4.09·10¹⁸',    o:4.09e18,      hf:true,  role:'Fischer'},
+    {n:"Fi24'",ord:'1.26·10²⁴',    o:1.26e24,      hf:true,  role:'Fischer'},
+    {n:'HS',   ord:'44352000',     o:44352000,     hf:true,  role:'Higman-Sims'},
+    {n:'McL',  ord:'898128000',    o:898128000,    hf:true,  role:'McLaughlin'},
+    {n:'He',   ord:'4.03·10⁹',     o:4.03e9,       hf:true,  role:'Held'},
+    {n:'Suz',  ord:'4.48·10¹¹',    o:4.48e11,      hf:true,  role:'Suzuki'},
+    {n:'HN',   ord:'2.73·10¹⁴',    o:2.73e14,      hf:true,  role:'Harada-Norton'},
+    {n:'Th',   ord:'9.07·10¹⁶',    o:9.07e16,      hf:true,  role:'Thompson'},
+    {n:'B',    ord:'4.15·10³³',    o:4.15e33,      hf:true,  role:'Baby Monster'},
+    {n:'M',    ord:'8.08·10⁵³',    o:8.08e53,      hf:true,  role:'MONSTER (Friendly Giant)'},
+    {n:'J2',   ord:'604800',       o:604800,       hf:true,  role:'Janko (Hall-Janko)'},
+    {n:'J1',   ord:'175560',       o:175560,       hf:false, role:'Pariah — Janko'},
+    {n:'J3',   ord:'50232960',     o:50232960,     hf:false, role:'Pariah — Janko'},
+    {n:'J4',   ord:'8.68·10¹⁹',    o:8.68e19,      hf:false, role:'Pariah — Janko'},
+    {n:'Ru',   ord:'1.45·10¹¹',    o:1.45e11,      hf:false, role:'Pariah — Rudvalis'},
+    {n:'Ly',   ord:'5.18·10¹⁶',    o:5.18e16,      hf:false, role:'Pariah — Lyons'},
+    {n:'ON',   ord:'4.61·10¹¹',    o:4.61e11,      hf:false, role:"Pariah — O'Nan"}
+  ];
+  const MIN_REP=196883,MOONSHINE=196884;
+  const THRESH={golay:12,leech:24,monster:26};
+  function get(name){return SPORADIC.find(s=>s.n===name);}
+  function walk(seed,count){const out=[],n=SPORADIC.length;for(let i=0;i<count;i++)out.push(SPORADIC[((seed%n)+i+n)%n]);return out;}
+  function triadState(stable,sporadic){
+    return{
+      golay_active: stable>=THRESH.golay,
+      leech_active: stable>=THRESH.leech,
+      monster_active: sporadic>=THRESH.monster,
+      stable_count:stable, sporadic_count:sporadic, thresholds:THRESH,
+      level: stable>=THRESH.leech&&sporadic>=THRESH.monster ? 3
+           : stable>=THRESH.leech ? 2
+           : stable>=THRESH.golay ? 1 : 0
+    };
+  }
+  return{SPORADIC,MIN_REP,MOONSHINE,THRESH,get,walk,triadState};
+})();
+
+// ─── BARNES-WALL 256 ENGINE ──────────────────────────────────────────────
+// Recursive |u|u+v| Reed-Muller construction.  Base case 32 = 24 Golay + 8 zeros.
+// v derived from the Golay syndrome of the seed (the PROGRAM = geometric frustration).
+// Successive-cancellation decoder = the LENS that snaps noisy macro states.
+const BarnesWall=(()=>{
+  const Y=LeechEngine.Y;
+  const MACRO_ANCHOR_NRCI=323214/1000000;  // 0.323214 (paper anchor)
+  function fpToBits(hex){
+    if(typeof hex!=='string'||hex.length<4)return GolayExt.encode(new Array(12).fill(0));
+    const b0=parseInt(hex.slice(0,2),16)||0,b1=parseInt(hex.slice(2,4),16)||0;
+    const c=((b0<<4)|(b1>>4))&0xFFF;
+    const msg=[];for(let i=11;i>=0;i--)msg.push((c>>i)&1);
+    return GolayExt.encode(msg);
+  }
+  function syndromeV(seed24){return GolayExt.encode(GolayExt.syndrome(seed24));}
+  function generate(seed24,dim){
+    if(dim<=32){const p=[...seed24,0,0,0,0,0,0,0,0].slice(0,32);return p.map(x=>(x*2)%4);}
+    const half=dim>>1;
+    const u=generate(seed24,half);
+    const vb=syndromeV(seed24);
+    const vp=new Array(half).fill(0);for(let i=0;i<24&&i<half;i++)vp[i]=vb[i];
+    const v=vp.map(x=>(x*2)%4);
+    const upv=u.map((a,i)=>(a+v[i])%4);
+    return u.concat(upv);
+  }
+  function snap(macro){
+    function clean(vec){
+      const n=vec.length;
+      if(n===32){
+        const v24=vec.slice(0,24).map(x=>Math.floor(Math.abs(x)/2));
+        const msg=v24.slice(0,12);
+        const cw=GolayExt.encode(msg);
+        return cw.map(x=>(x*2)%4).concat([0,0,0,0,0,0,0,0]);
+      }
+      const half=n>>1;
+      const u=clean(vec.slice(0,half));
+      const vN=[];for(let i=0;i<half;i++)vN.push((vec[i]+vec[half+i])%4);
+      const v=clean(vN);
+      const upv=[];for(let i=0;i<half;i++)upv.push((u[i]+v[i])%4);
+      return u.concat(upv);
+    }
+    return clean(macro);
+  }
+  function nrci(macro){
+    let h=0,ns=0;for(const x of macro){if(x!==0)h++;ns+=x*x;}
+    const tax=h*Y+ns/64;return 10/(10+tax);
+  }
+  function audit(fingerprint,microNrci,dim){
+    dim=dim||256;
+    const seed=fpToBits(fingerprint);
+    const macro=generate(seed,dim);
+    const snapped=snap(macro);
+    const macroNrci=nrci(snapped),noisyNrci=nrci(macro);
+    const rel=microNrci>0?macroNrci/microNrci:0;
+    return{
+      dim, micro_nrci:microNrci, macro_nrci:macroNrci, noisy_nrci:noisyNrci,
+      relative_coherence:rel,
+      clarity: rel>=MACRO_ANCHOR_NRCI?'HIGH':'LOW',
+      decoder_gain:macroNrci-noisyNrci,
+      seed_hw:GolayExt.hw(seed),
+      vector_hw:snapped.reduce((a,x)=>a+(x?1:0),0),
+      vector_norm_sq:snapped.reduce((a,x)=>a+x*x,0),
+      anchor:MACRO_ANCHOR_NRCI
+    };
+  }
+  return{Y,MACRO_ANCHOR_NRCI,fpToBits,syndromeV,generate,snap,nrci,audit};
+})();
+
+// ─── PARTICLE PHYSICS PREDICTIONS (UBP v6.0 Sink Protocol) ───────────────
+// 13D Sink leakage: L = (π·φ·e mod 1) / 13.  Provides ratios for proton/muon/electron.
+const Particles=(()=>{
+  const PI=Math.PI,PHI=1.6180339887498949,E=Math.E;
+  const monad=PI*PHI*E;
+  const wobble=monad-Math.floor(monad);
+  const L=wobble/13;
+  const sigma=29/24;
+  const Ls=L*sigma;
+  const proton_e=1836+2*Ls;     // proton/electron ratio
+  const muon_e  =206 + 12*L;     // muon/electron ratio
+  const alpha_inv=220-83+L;      // fine-structure constant inverse
+  return{PI,PHI,E,monad,wobble,L,sigma,Ls,proton_e,muon_e,alpha_inv,
+    summary:()=>({
+      monad:monad, wobble:wobble, L:L, L_s:Ls,
+      'proton/e-':proton_e, 'muon/e-':muon_e, 'alpha_inv':alpha_inv,
+      'proton_target':1836.15267, 'muon_target':206.76828, 'alpha_target':137.035999,
+      'proton_err_pct':Math.abs(proton_e-1836.15267)/1836.15267*100,
+      'muon_err_pct':Math.abs(muon_e-206.76828)/206.76828*100,
+      'alpha_err_pct':Math.abs(alpha_inv-137.035999)/137.035999*100
+    })
+  };
+})();
+
+// ─── SHADOW REGISTER ─────────────────────────────────────────────────────
+class ShadReg{
+  constructor(){this._d=[0];this._v=0;this.shadow_active=false;this.carry_work=0;}
+  write(n){
+    const mag=Math.abs(Math.round(n)),nd=BALU.td(mag),od=this._d;
+    let delta=0;const ml=Math.max(nd.length,od.length);
+    for(let i=0;i<ml;i++)delta+=Math.abs((i<nd.length?nd[i]:0)-(i<od.length?od[i]:0));
+    this._d=nd;this._v=mag;this.carry_work+=delta;
+    this.shadow_active=nd.some(d=>d>4);return this;
+  }
+  wfa(digs,ce){
+    this._d=[...digs];while(this._d.length>1&&!this._d[this._d.length-1])this._d.pop();
+    this._v=BALU.fd(this._d);this.carry_work+=ce;
+    this.shadow_active=this._d.some(d=>d>4);return this;
+  }
+  read(){return this._v;}
+  digs(){return[...this._d];}
+  sfp(){
+    const si=[],sd=[];this._d.forEach((d,i)=>{if(d>4){si.push(i);sd.push(d);}});
+    return{shadow_active:this.shadow_active,count:si.length,indices:si,digits:sd,carry_work:this.carry_work};
+  }
+  reset(){this._d=[0];this._v=0;this.shadow_active=false;this.carry_work=0;}
+}
+
+// ─── PLAIN REGISTER ───────────────────────────────────────────────────────
+class PlainReg{
+  constructor(){this._v=0;}
+  write(n){this._v=Math.abs(Math.round(n));return this;}
+  wfa(digs,_ce){this._v=BALU.fd(digs);return this;}
+  read(){return this._v;}
+  digs(){return BALU.td(this._v);}
+  get shadow_active(){return false;}
+  get carry_work(){return 0;}
+  sfp(){return{shadow_active:false,count:0,indices:[],digits:[],carry_work:0};}
+  reset(){this._v=0;}
+}
+
+// ─── ASSEMBLER ────────────────────────────────────────────────────────────
+const ASM=(()=>{
+  const OPS={LOAD:1,MOV:2,ADD:3,SUB:4,AND:5,OR:6,XOR:7,NOT:8,LSL:9,LSR:10,MUL:11,DIV:12,MOD:13,CMP:14,HALT:15,JMP:16,JZ:17,JNZ:18,JN:19,JNN:20,JC:21,JE:22,JNE:23,JG:24,JL:25,JGE:26,JLE:27,ADDI:32,SUBI:33,MULI:34,ANDI:35,ORI:36,CMPI:37,STORE:48,LOAD_MEM:49,STOREI:50,LOADI:51,STOREX:52,LOADX:53,PUSH:64,POP:65,CALL:66,RET:67,SYSCALL:80,NOP:81,CLRS:82};
+  const FORMS={1:'R,I',2:'R,R',3:'R,R,R',4:'R,R,R',5:'R,R,R',6:'R,R,R',7:'R,R,R',8:'R,R',9:'R,R,I',10:'R,R,I',11:'R,R,R',12:'R,R,R',13:'R,R,R',14:'R,R',15:'',16:'A',17:'A',18:'A',19:'A',20:'A',21:'A',22:'A',23:'A',24:'A',25:'A',26:'A',27:'A',32:'R,R,I',33:'R,R,I',34:'R,R,I',35:'R,R,I',36:'R,R,I',37:'R,I',48:'R,A',49:'R,A',50:'R,R',51:'R,R',52:'R,R,I',53:'R,R,I',64:'R',65:'R',66:'A',67:'',80:'I',81:'',82:''};
+  const REV=Object.fromEntries(Object.entries(OPS).map(([k,v])=>[v,k]));
+  function tok(line){
+    line=line.replace(/;.*$/,'').trim();if(!line)return[];
+    const t=[];let i=0;
+    while(i<line.length){
+      if(' \t,'.includes(line[i])){i++;continue;}
+      if(line[i]==="'"){let j=i+1;while(j<line.length&&line[j]!=="'")j++;t.push(line.slice(i,j+1));i=j+1;}
+      else{let j=i;while(j<line.length&&!' \t,'.includes(line[j]))j++;t.push(line.slice(i,j));i=j;}
+    }
+    return t;
+  }
+  function pImm(s,C){
+    if(!s)throw new Error('expected immediate');
+    if(s[0]==='#')s=s.slice(1);
+    if(s[0]==="'"&&s[s.length-1]==="'"){const c=s.slice(1,-1);if(c==='\\n')return 10;if(c==='\\t')return 9;if(c==='\\0')return 0;return c.codePointAt(0);}
+    if(s in C)return C[s];
+    if(/^0[xX]/.test(s))return parseInt(s,16);
+    if(/^0[bB]/.test(s))return parseInt(s.slice(2),2);
+    const n=parseInt(s,10);if(isNaN(n))throw new Error(`bad immediate: ${s}`);return n;
+  }
+  function pReg(s){if(!s)throw new Error('expected register');const m=s.match(/^[Rr]([0-7])$/);if(!m)throw new Error(`not a register: ${s}`);return+m[1];}
+  function assemble(src){
+    const lines=src.split('\n');const C={},L={},MI={},DL={};let dp=0,idx=0;
+    for(let ln=0;ln<lines.length;ln++){
+      let line=lines[ln].replace(/;.*$/,'').trim();if(!line)continue;
+      if(line.startsWith('.equ')){const p=line.split(/\s+/);C[p[1]]=pImm(p[2],C);continue;}
+      if(line.startsWith('.org')){dp=parseInt(line.split(/\s+/)[1],10);continue;}
+      if(line.startsWith('.data')){const p=tok(line),nm=p[1],sa=dp;const vs=[];for(let k=2;k<p.length;k++){let v=p[k][0]==="'"?p[k].slice(1,-1).codePointAt(0):pImm(p[k],C);vs.push(v);MI[dp]=v;dp++;}DL[nm]={sa,vs};C[nm]=sa;continue;}
+      while(line.match(/^([A-Za-z_]\w*):\s*/)){const m=line.match(/^([A-Za-z_]\w*):\s*/);L[m[1]]=idx;line=line.slice(m[0].length);}
+      if(!line.trim())continue;
+      const t=tok(line);if(!t.length)continue;
+      const mn=t[0].toUpperCase();if(!(mn in OPS))throw new Error(`Line ${ln+1}: unknown mnemonic '${t[0]}'`);idx++;
+    }
+    const instrs=[];
+    for(let ln=0;ln<lines.length;ln++){
+      let line=lines[ln].replace(/;.*$/,'').trim();if(!line||line.startsWith('.'))continue;
+      while(line.match(/^([A-Za-z_]\w*):\s*/)){const m=line.match(/^([A-Za-z_]\w*):\s*/);line=line.slice(m[0].length);}
+      if(!line.trim())continue;
+      const t=tok(line);if(!t.length)continue;
+      const mn=t[0].toUpperCase();if(!(mn in OPS))continue;
+      const op=OPS[mn],form=FORMS[op];
+      const adr=s=>{if(s in L)return L[s];if(s in C)return C[s];if(/^0[xX]/.test(s))return parseInt(s,16);const n=parseInt(s,10);if(isNaN(n))throw new Error(`Line ${ln+1}: unknown label '${s}'`);return n;};
+      let ins;
+      try{
+        switch(form){
+          case'':ins=[op];break;case'R':ins=[op,pReg(t[1])];break;case'A':ins=[op,adr(t[1])];break;
+          case'I':ins=[op,pImm(t[1],C)];break;case'R,R':ins=[op,pReg(t[1]),pReg(t[2])];break;
+          case'R,I':ins=[op,pReg(t[1]),pImm(t[2],C)];break;case'R,A':ins=[op,pReg(t[1]),adr(t[2])];break;
+          case'R,R,R':ins=[op,pReg(t[1]),pReg(t[2]),pReg(t[3])];break;
+          case'R,R,I':ins=[op,pReg(t[1]),pReg(t[2]),pImm(t[3],C)];break;
+          default:throw new Error('unknown form');
+        }
+      }catch(e){throw new Error(`Line ${ln+1}: ${e.message}`);}
+      instrs.push(ins);
+    }
+    return{instrs,labels:L,consts:C,MI,DL};
+  }
+  function disasm(ins,L={}){
+    const[op,...args]=ins,mn=REV[op]||`?${op}`,form=FORMS[op]||'';
+    const RL=Object.fromEntries(Object.entries(L).map(([k,v])=>[v,k]));
+    const parts=form.split(',').filter(Boolean);
+    const ops=parts.map((t,i)=>{const x=args[i];if(t==='R')return`R${x}`;if(t==='A')return RL[x]||String(x);if(t==='I')return`#${x}`;return String(x);});
+    return`${mn}${ops.length?' '+ops.join(', '):''}`;
+  }
+  return{assemble,disasm,OPS,FORMS,REV};
+})();
+
+// ─── CPU ─────────────────────────────────────────────────────────────────
+class CPU{
+  constructor({substrate_mode=false,word_bits=16,memory_size=256,trace=false,max_cycles=2000000}={}){
+    this.sm=substrate_mode;this.wb=word_bits;this.wmax=(2**word_bits)-1;this.wsign=2**(word_bits-1);
+    this.ms=memory_size;this.tracing=trace;this.maxC=max_cycles;
+    this._out='';this.input_queue=[];this.call_stack=[];this.trace_log=[];
+    const R=substrate_mode?ShadReg:PlainReg;
+    this.regs=Array.from({length:8},()=>new R());
+    this.mem=Array.from({length:memory_size},()=>new PlainReg());
+    this.regs[7].write(memory_size-1);
+    this.pc=0;this.halted=false;this.cycles=0;
+    this.flags={Z:0,N:0,C:0,V:0,S:0};this._sg=new Array(8).fill(false);this._ec=0;
+  }
+  rr(i){const m=this.regs[i].read();return this._sg[i]?-m:m;}
+  wr(i,v){const n=v<0;const m=Math.abs(Math.round(v));this._sg[i]=n;this.regs[i].write(m);if(this.sm&&this.regs[i].shadow_active)this.flags.S=1;}
+  wra(i,d,ce,n){this._sg[i]=n;this.regs[i].wfa(d,ce);if(this.sm&&this.regs[i].shadow_active)this.flags.S=1;}
+  rm(a){if(a<0||a>=this.ms)throw new Error(`mem[${a}] out of bounds`);return this.mem[a].read();}
+  wm(a,v){if(a<0||a>=this.ms)throw new Error(`mem[${a}] out of bounds`);this.mem[a].write(Math.abs(Math.round(v)));}
+  sg(n){n%=(this.wmax+1);if(n<0)n+=this.wmax+1;if(n>=this.wsign)n-=this.wmax+1;return n;}
+  sZN(v){this.flags.Z=v===0?1:0;this.flags.N=v<0?1:0;}
+  sCV_a(a,b,sv){const ua=(a+this.wmax+1)%(this.wmax+1),ub=(b+this.wmax+1)%(this.wmax+1);this.flags.C=(ua+ub)>this.wmax?1:0;this.flags.V=(((a^b)&this.wsign)===0&&((a^sv)&this.wsign)!==0)?1:0;}
+  sCV_s(a,b,sv){this.flags.C=a<b?1:0;this.flags.V=(((a^b)&this.wsign)!==0&&((a^sv)&this.wsign)!==0)?1:0;}
+  sau_add(rd,r1,r2){
+    const a=this.rr(r1),b=this.rr(r2),sv=this.sg(a+b);
+    if(this.sm){const r=BALU.signedAdd(Math.abs(a),a<0,Math.abs(b),b<0);this.wra(rd,BALU.td(Math.abs(sv)),r.ce,sv<0);}else this.wr(rd,sv);
+    this.sZN(sv);this.sCV_a(a,b,sv);
+  }
+  sau_sub(rd,r1,r2){
+    const a=this.rr(r1),b=this.rr(r2),sv=this.sg(a-b);
+    if(this.sm){const r=BALU.signedAdd(Math.abs(a),a<0,Math.abs(b),b>=0);this.wra(rd,BALU.td(Math.abs(sv)),r.ce,sv<0);}else this.wr(rd,sv);
+    this.sZN(sv);this.sCV_s(a,b,sv);
+  }
+  sau_mul(rd,r1,r2){
+    const a=this.rr(r1),b=this.rr(r2),neg=(a<0)!==(b<0),mA=Math.abs(a),mB=Math.abs(b);
+    let sv;if(this.sm){const p=BALU.fd(BALU.mulD(BALU.td(mA),BALU.td(mB)));sv=this.sg((neg&&p)?-p:p);this.wra(rd,BALU.td(Math.abs(sv)),0,sv<0);}else{sv=this.sg((neg&&mA*mB)?-(mA*mB):mA*mB);this.wr(rd,sv);}
+    this.sZN(sv);
+  }
+  sau_div(rd,r1,r2){
+    const a=this.rr(r1),b=this.rr(r2);if(!b)throw new Error('DIV by zero');
+    const neg=(a<0)!==(b<0),mA=Math.abs(a),mB=Math.abs(b);
+    let q;if(this.sm){const r=BALU.divmodD(BALU.td(mA),BALU.td(mB));q=BALU.fd(r.q);}else q=Math.trunc(mA/mB);
+    const sv=this.sg((neg&&q)?-q:q);if(this.sm)this.wra(rd,BALU.td(Math.abs(sv)),0,sv<0);else this.wr(rd,sv);this.sZN(sv);
+  }
+  sau_mod(rd,r1,r2){
+    const a=this.rr(r1),b=this.rr(r2);if(!b)throw new Error('MOD by zero');
+    const mA=Math.abs(a),mB=Math.abs(b);
+    let rem;if(this.sm){const r=BALU.divmodD(BALU.td(mA),BALU.td(mB));rem=BALU.fd(r.r);}else rem=mA%mB;
+    const sv=this.sg((a<0&&rem)?-rem:rem);if(this.sm)this.wra(rd,BALU.td(Math.abs(sv)),0,sv<0);else this.wr(rd,sv);this.sZN(sv);
+  }
+  bwise(rd,r1,r2,op){
+    const a=Math.abs(this.rr(r1)),b=Math.abs(this.rr(r2));
+    let v;if(op==='AND')v=a&b;else if(op==='OR')v=a|b;else v=a^b;v>>>=0;
+    const d=BALU.td(v);if(this.sm)this.wra(rd,d,0,false);else this.wr(rd,v);this.sZN(v);
+  }
+  execute(ins){
+    const[op,...a]=ins;
+    switch(op){
+      case 1:{this.wr(a[0],a[1]);this.sZN(this.sg(a[1]));break;}
+      case 2:{const v=this.rr(a[1]);this.wr(a[0],v);this.sZN(v);break;}
+      case 3:this.sau_add(a[0],a[1],a[2]);break;
+      case 4:this.sau_sub(a[0],a[1],a[2]);break;
+      case 5:this.bwise(a[0],a[1],a[2],'AND');break;
+      case 6:this.bwise(a[0],a[1],a[2],'OR');break;
+      case 7:this.bwise(a[0],a[1],a[2],'XOR');break;
+      case 8:{const v=(~Math.abs(this.rr(a[1])))&this.wmax;const d=BALU.td(v);if(this.sm)this.wra(a[0],d,0,false);else this.wr(a[0],v);this.sZN(v);break;}
+      case 9:{const v=(Math.abs(this.rr(a[1]))<<a[2])&this.wmax;const d=BALU.td(v);if(this.sm)this.wra(a[0],d,0,false);else this.wr(a[0],v);this.sZN(v);break;}
+      case 10:{const v=(Math.abs(this.rr(a[1]))>>>a[2])&this.wmax;const d=BALU.td(v);if(this.sm)this.wra(a[0],d,0,false);else this.wr(a[0],v);this.sZN(v);break;}
+      case 11:this.sau_mul(a[0],a[1],a[2]);break;
+      case 12:this.sau_div(a[0],a[1],a[2]);break;
+      case 13:this.sau_mod(a[0],a[1],a[2]);break;
+      case 14:{const x=this.rr(a[0]),y=this.rr(a[1]),sv=this.sg(x-y);this.sZN(sv);this.sCV_s(x,y,sv);break;}
+      case 15:this.halted=true;break;
+      case 16:this.pc=a[0];return;
+      case 17:if(this.flags.Z){this.pc=a[0];return;}break;
+      case 18:if(!this.flags.Z){this.pc=a[0];return;}break;
+      case 19:if(this.flags.N){this.pc=a[0];return;}break;
+      case 20:if(!this.flags.N){this.pc=a[0];return;}break;
+      case 21:if(this.flags.C){this.pc=a[0];return;}break;
+      case 22:if(this.flags.Z){this.pc=a[0];return;}break;
+      case 23:if(!this.flags.Z){this.pc=a[0];return;}break;
+      case 24:if(!this.flags.Z&&this.flags.N===this.flags.V){this.pc=a[0];return;}break;
+      case 25:if(this.flags.N!==this.flags.V){this.pc=a[0];return;}break;
+      case 26:if(this.flags.N===this.flags.V){this.pc=a[0];return;}break;
+      case 27:if(this.flags.Z||this.flags.N!==this.flags.V){this.pc=a[0];return;}break;
+      case 32:{const rs=this.rr(a[1]),sv=this.sg(rs+a[2]);if(this.sm){const r=BALU.signedAdd(Math.abs(rs),rs<0,Math.abs(a[2]),a[2]<0);this.wra(a[0],BALU.td(Math.abs(sv)),r.ce,sv<0);}else this.wr(a[0],sv);this.sZN(sv);this.sCV_a(rs,a[2],sv);break;}
+      case 33:{const rs=this.rr(a[1]),sv=this.sg(rs-a[2]);if(this.sm){const r=BALU.signedAdd(Math.abs(rs),rs<0,Math.abs(a[2]),a[2]>=0);this.wra(a[0],BALU.td(Math.abs(sv)),r.ce,sv<0);}else this.wr(a[0],sv);this.sZN(sv);this.sCV_s(rs,a[2],sv);break;}
+      case 34:{const rs=this.rr(a[1]),neg=(rs<0)!==(a[2]<0),mA=Math.abs(rs),mB=Math.abs(a[2]);let sv;if(this.sm){const p=BALU.fd(BALU.mulD(BALU.td(mA),BALU.td(mB)));sv=this.sg((neg&&p)?-p:p);this.wra(a[0],BALU.td(Math.abs(sv)),0,sv<0);}else{sv=this.sg((neg&&mA*mB)?-(mA*mB):mA*mB);this.wr(a[0],sv);}this.sZN(sv);break;}
+      case 35:{const v=Math.abs(this.rr(a[1]))&Math.abs(a[2]);const d=BALU.td(v);if(this.sm)this.wra(a[0],d,0,false);else this.wr(a[0],v);this.sZN(v);break;}
+      case 36:{const v=Math.abs(this.rr(a[1]))|Math.abs(a[2]);const d=BALU.td(v);if(this.sm)this.wra(a[0],d,0,false);else this.wr(a[0],v);this.sZN(v);break;}
+      case 37:{const rs=this.rr(a[0]),sv=this.sg(rs-a[1]);this.sZN(sv);this.sCV_s(rs,a[1],sv);break;}
+      case 48:this.wm(a[1],this.rr(a[0]));break;
+      case 49:{const v=this.rm(a[1]);this.wr(a[0],v);this.sZN(v);break;}
+      case 50:this.wm(this.rr(a[1]),this.rr(a[0]));break;
+      case 51:{const v=this.rm(this.rr(a[1]));this.wr(a[0],v);this.sZN(v);break;}
+      case 52:this.wm(this.rr(a[1])+a[2],this.rr(a[0]));break;
+      case 53:{const v=this.rm(this.rr(a[1])+a[2]);this.wr(a[0],v);this.sZN(v);break;}
+      case 64:{const sp=this.rr(7);this.wm(sp,this.rr(a[0]));this.wr(7,sp-1);if(sp-1<0)throw new Error('StackOverflow');break;}
+      case 65:{const sp=this.rr(7)+1;this.wr(7,sp);const v=this.rm(sp);this.wr(a[0],v);this.sZN(v);break;}
+      case 66:this.call_stack.push(this.pc+1);this.pc=a[0];return;
+      case 67:if(!this.call_stack.length)throw new Error('RET: empty call_stack');this.pc=this.call_stack.pop();return;
+      case 80:this._sc(a[0]);break;
+      case 81:break;
+      case 82:this.flags.S=0;break;
+      default:throw new Error(`Unknown opcode: ${op}`);
+    }
+    this.pc++;
+  }
+  _sc(n){
+    switch(n){
+      case 1:this._out+=String(this.rr(0));break;
+      case 2:this._out+=String.fromCodePoint(Math.max(0,this.rr(0)));break;
+      case 3:{let a=this.rr(0);while(a<this.ms){const c=this.rm(a);if(!c)break;this._out+=String.fromCodePoint(c);a++;}}break;
+      case 4:this.wr(0,this.input_queue.length?this.input_queue.shift():0);break;
+      case 5:this.halted=true;this._ec=this.rr(0);break;
+      case 6:this._out+='\n';break;
+      case 7:{let s='';for(let i=0;i<8;i++)s+=`R${i}=${this.rr(i)} `;s+=`| Z=${this.flags.Z} N=${this.flags.N} C=${this.flags.C} V=${this.flags.V} S=${this.flags.S} | PC=${this.pc}`;this._out+=s+'\n';}break;
+      // ─── UBP TRIAD SYSCALLS ──────────────────────────────────
+      // SYSCALL 8  LEECH_OCTAD       R0=octad_idx → prints octad bits + tax
+      // SYSCALL 9  LEECH_TAX         R0=octad_idx → R0=tax*1e6 (integer)
+      // SYSCALL 10 LEECH_HEALTH      R0=octad_idx → prints ontological health
+      // SYSCALL 11 BW_AUDIT          → prints 256D Barnes-Wall audit (uses register sha)
+      // SYSCALL 12 TRIAD_STATUS      → prints triad activation state, R0=level (0-3)
+      // SYSCALL 13 MONSTER_INFO      R0=group_idx → prints sporadic group info
+      // SYSCALL 14 PARTICLE_PRED     R0=which (0=alpha,1=p/e,2=mu/e) → R0=pred*1e6
+      // SYSCALL 15 LATTICE_PROBE     R0=val → nearest octad / dim diagnostics
+      case 8:{ // LEECH_OCTAD
+        const idx=this.rr(0);const oct=GolayExt.octads();const o=oct[((idx%oct.length)+oct.length)%oct.length];
+        const pts=LeechEngine.expandOctad(o);const tax=LeechEngine.symmetryTax(pts[0]);
+        this._out+=`octad[${idx}] bits=${o.join('')} hw=8 → ${pts.length} Leech points, |p|²=${LeechEngine.normSqScaled(pts[0])} tax=${tax.toFixed(6)}\n`;
+        this.wr(0,Math.round(tax*1e6));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 9:{ // LEECH_TAX
+        const idx=this.rr(0);const oct=GolayExt.octads();const o=oct[((idx%oct.length)+oct.length)%oct.length];
+        const pts=LeechEngine.expandOctad(o);const tax=LeechEngine.symmetryTax(pts[0]);
+        this.wr(0,Math.round(tax*1e6));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 10:{ // LEECH_HEALTH
+        const idx=this.rr(0);const oct=GolayExt.octads();const o=oct[((idx%oct.length)+oct.length)%oct.length];
+        const pts=LeechEngine.expandOctad(o);const h=LeechEngine.ontologicalHealth(pts[0]);
+        this._out+=`octad[${idx}] health: Reality=${h.Reality.toFixed(3)} Info=${h.Info.toFixed(3)} Activation=${h.Activation.toFixed(3)} Potential=${h.Potential.toFixed(3)} | Global_NRCI=${h.Global_NRCI.toFixed(3)}\n`;
+        this.wr(0,Math.round(h.Global_NRCI*1e6));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 11:{ // BW_AUDIT
+        const parts=[...this.regs.map(r=>r.read()),...Array.from({length:32},(_,i)=>this.mem[i].read())];
+        const fp=SHA256.hash(parts.join(','));
+        const a=BarnesWall.audit(fp,GolayEngine.NRCI,256);
+        this._out+=`BW256 audit: micro=${a.micro_nrci.toFixed(4)} macro=${a.macro_nrci.toFixed(4)} rel=${a.relative_coherence.toFixed(4)} clarity=${a.clarity} | seed_hw=${a.seed_hw} vec_hw=${a.vector_hw}\n`;
+        this.wr(0,Math.round(a.macro_nrci*1e6));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 12:{ // TRIAD_STATUS
+        // Stability count: 12 baseline (Golay anchor) + 1 per non-zero non-SP register
+        // + 1 per substrate-active register (mode boost) + 1 per shadow register.
+        let stable=12;
+        for(let i=0;i<7;i++)if(this.rr(i)!==0)stable++;
+        if(this.sm){stable+=4;for(let i=0;i<7;i++)if(this.regs[i].shadow_active)stable++;}
+        const sporadic=MonsterEngine.SPORADIC.length;
+        const t=MonsterEngine.triadState(stable,sporadic);
+        this._out+=`TRIAD: Golay=${t.golay_active?'✓':'✗'} Leech=${t.leech_active?'✓':'✗'} Monster=${t.monster_active?'✓':'✗'} | level=${t.level}/3 stable=${t.stable_count} sporadic=${t.sporadic_count}\n`;
+        this.wr(0,t.level);this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 13:{ // MONSTER_INFO
+        const idx=this.rr(0);const sp=MonsterEngine.SPORADIC;const g=sp[((idx%sp.length)+sp.length)%sp.length];
+        this._out+=`Sporadic[${idx}] ${g.n} order=${g.ord} ${g.hf?'(Happy Family)':'(PARIAH)'} — ${g.role}\n`;
+        this.wr(0,Math.min(0x7FFFFFFF,Math.round(g.o)));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 14:{ // PARTICLE_PRED
+        const k=this.rr(0);const s=Particles.summary();
+        let pred,err,name;
+        if(k===0){pred=Particles.alpha_inv;err=s.alpha_err_pct;name='alpha⁻¹';}
+        else if(k===1){pred=Particles.proton_e;err=s.proton_err_pct;name='p/e⁻';}
+        else{pred=Particles.muon_e;err=s.muon_err_pct;name='μ/e⁻';}
+        this._out+=`particle ${name}: pred=${pred.toFixed(6)} err=${err.toFixed(5)}% (sink leakage L=${Particles.L.toFixed(8)})\n`;
+        this.wr(0,Math.round(pred*1e6));this.sZN(this.sg(this.rr(0)));
+      }break;
+      case 15:{ // LATTICE_PROBE — fold register R0 into 24-bit signature, find nearest octad
+        const v=this.rr(0)|0;
+        const sig=new Array(24).fill(0);for(let b=0;b<24;b++)sig[b]=(v>>(b%32))&1;
+        const m=LeechEngine.nearestOctadIdx(sig);
+        this._out+=`probe(${v}): signature=${sig.join('')} → nearest octad #${m.idx} (Hamming distance ${m.distance})\n`;
+        this.wr(0,m.idx);this.sZN(this.sg(this.rr(0)));
+      }break;
+      default:throw new Error(`SYSCALL ${n} unknown`);
+    }
+  }
+  run(instrs){
+    const t0=performance.now();this.halted=false;
+    while(!this.halted){
+      if(this.pc>=instrs.length){if(this.pc===instrs.length)break;throw new Error(`PC=${this.pc} out of range`);}
+      if(this.tracing)this.trace_log.push({pc:this.pc,ins:instrs[this.pc],fl:{...this.flags},cy:this.cycles});
+      this.execute(instrs[this.pc]);this.cycles++;
+      if(this.cycles>this.maxC)throw new Error(`max_cycles exceeded (${this.maxC})`);
+    }
+    const el=(performance.now()-t0)/1000;
+    let th=null;
+    if(this.tracing&&this.trace_log.length){
+      const s=this.trace_log.map(t=>`${t.pc}:${JSON.stringify(t.ins)}:${JSON.stringify(t.fl)}`).join('|');
+      th=SHA256.hash(s);
+    }
+    return{cycles:this.cycles,halted:this.halted,exit_code:this._ec,output:this._out,elapsed_s:el,
+      ips:el>0?Math.round(this.cycles/el):Infinity,flags:{...this.flags},
+      registers:Array.from({length:8},(_,i)=>this.rr(i)),
+      shadow_flag:this.flags.S,total_carry_work:this.regs.reduce((a,r)=>a+r.carry_work,0),trace_hash:th};
+  }
+  sfp(){
+    if(!this.sm)return{mode:'plain'};
+    const sr=[];let cw=0;this.regs.forEach((r,i)=>{if(r.shadow_active)sr.push(i);cw+=r.carry_work;});
+    const parts=[...this.regs.map(r=>r.read()),...Array.from({length:32},(_,i)=>this.mem[i].read())];
+    return{mode:'substrate',nrci:GolayEngine.NRCI,magnitude_sha:SHA256.hash(parts.join(',')).slice(0,16),shadow_flag:this.flags.S,shadow_registers:sr,total_carry_work:cw};
+  }
+  reset(){
+    this.regs.forEach(r=>r.reset());this.mem.forEach(m=>m.reset());
+    this.regs[7].write(this.ms-1);this._sg.fill(false);
+    this.flags={Z:0,N:0,C:0,V:0,S:0};this.pc=0;this.cycles=0;this.halted=false;this._ec=0;
+    this._out='';this.input_queue=[];this.call_stack=[];this.trace_log=[];
+  }
+}
+
+// ─── EXAMPLES ─────────────────────────────────────────────────────────────
+const EX={
+hello:`; 01_hello.nca — PRINT_CHAR + char literals
+    LOAD R0, 'H'\n    SYSCALL 2\n    LOAD R0, 'e'\n    SYSCALL 2
+    LOAD R0, 'l'\n    SYSCALL 2\n    LOAD R0, 'l'\n    SYSCALL 2
+    LOAD R0, 'o'\n    SYSCALL 2\n    LOAD R0, ','\n    SYSCALL 2
+    LOAD R0, ' '\n    SYSCALL 2\n    LOAD R0, 'W'\n    SYSCALL 2
+    LOAD R0, 'o'\n    SYSCALL 2\n    LOAD R0, 'r'\n    SYSCALL 2
+    LOAD R0, 'l'\n    SYSCALL 2\n    LOAD R0, 'd'\n    SYSCALL 2
+    LOAD R0, '!'\n    SYSCALL 2\n    SYSCALL 6\n    HALT`,
+factorial_iter:`; 02_factorial_iter.nca — Iterative factorial (7! = 5040)
+; MUL dispatched through SubstrateALU in substrate mode.
+.equ N 7
+    LOAD R0, #N
+    LOAD R1, #1
+loop:
+    CMPI R0, 1
+    JLE  done
+    MUL  R1, R1, R0
+    SUBI R0, R0, #1
+    JMP  loop
+done:
+    MOV  R0, R1
+    SYSCALL 1
+    SYSCALL 6
+    HALT`,
+factorial_rec:`; 03_factorial_recursive.nca — Recursive factorial (10! = 3628800)
+    LOAD R0, #10
+    CALL fact
+    SYSCALL 1
+    SYSCALL 6
+    HALT
+fact:
+    CMPI R0, 1
+    JLE  fact_base
+    PUSH R0
+    SUBI R0, R0, #1
+    CALL fact
+    POP  R1
+    MUL  R0, R0, R1
+    RET
+fact_base:
+    LOAD R0, #1
+    RET`,
+bubble_sort:`; 04_bubble_sort.nca — Bubble sort [5,3,8,1,9,2,7,4,6] ascending
+.equ N 9
+.data arr 5 3 8 1 9 2 7 4 6
+
+    LOAD R5, #N
+outer:
+    SUBI R5, R5, #1
+    CMPI R5, 0
+    JLE  print_arr
+    LOAD R3, arr
+    LOAD R4, #0
+inner:
+    CMP  R4, R5
+    JGE  outer
+    LOADI  R0, R3
+    ADDI   R6, R3, #1
+    LOADI  R1, R6
+    CMP    R0, R1
+    JLE    no_swap
+    STOREI R1, R3
+    STOREI R0, R6
+no_swap:
+    ADDI R3, R3, #1
+    ADDI R4, R4, #1
+    JMP  inner
+print_arr:
+    LOAD R3, arr
+    LOAD R4, #N
+pl:
+    CMPI   R4, 0
+    JLE    done
+    LOADI  R0, R3
+    SYSCALL 1
+    SYSCALL 6
+    ADDI   R3, R3, #1
+    SUBI   R4, R4, #1
+    JMP    pl
+done:
+    HALT`,
+prime_sieve:`; 05_prime_sieve.nca — Sieve of Eratosthenes, primes up to 50
+; MOD uses SubstrateALU Knuth D in substrate mode.
+.equ LIMIT 50
+    LOAD R0, #2
+outer:
+    CMPI R0, LIMIT
+    JG   done
+    LOAD R1, #2
+    LOAD R3, #0
+inner:
+    MUL  R4, R1, R1
+    CMP  R4, R0
+    JG   check
+    MOD  R4, R0, R1
+    CMPI R4, 0
+    JE   mark
+    ADDI R1, R1, #1
+    JMP  inner
+mark:
+    LOAD R3, #1
+check:
+    CMPI R3, 0
+    JNE  skip
+    SYSCALL 1
+    SYSCALL 6
+skip:
+    ADDI R0, R0, #1
+    JMP  outer
+done:
+    HALT`,
+fibonacci:`; 06_fibonacci.nca — First 14 Fibonacci numbers
+; ADD is SubstrateALU carry/borrow in substrate mode.
+.equ COUNT 14
+    LOAD R0, #0
+    LOAD R1, #1
+    LOAD R2, #COUNT
+loop:
+    CMPI R2, 0
+    JLE  done
+    SYSCALL 1
+    SYSCALL 6
+    ADD  R3, R0, R1
+    MOV  R0, R1
+    MOV  R1, R3
+    SUBI R2, R2, #1
+    JMP  loop
+done:
+    HALT`,
+gcd:`; 07_gcd.nca — Euclidean GCD via subroutine: GCD(864, 576) = 288
+.equ A 864
+.equ B 576
+    LOAD R0, #A
+    LOAD R1, #B
+    CALL gcd_fn
+    SYSCALL 1
+    SYSCALL 6
+    HALT
+gcd_fn:
+    CMPI R1, 0
+    JE   gcd_done
+    MOD  R2, R0, R1
+    MOV  R0, R1
+    MOV  R1, R2
+    JMP  gcd_fn
+gcd_done:
+    RET`,
+string_rev:`; 08_string_reverse.nca — Reverse "NOISECORE" → "EROCESION"
+.data src 'N' 'O' 'I' 'S' 'E' 'C' 'O' 'R' 'E' 0
+.org 20
+.data dst 0 0 0 0 0 0 0 0 0 0
+    LOAD R0, src
+    LOAD R1, #0
+flen:
+    LOADI R2, R0
+    CMPI  R2, 0
+    JE    fnd
+    ADDI  R0, R0, #1
+    ADDI  R1, R1, #1
+    JMP   flen
+fnd:
+    SUBI  R0, R0, #1
+    LOAD  R3, dst
+cpy:
+    CMPI  R1, 0
+    JLE   wn
+    LOADI  R2, R0
+    STOREI R2, R3
+    SUBI   R0, R0, #1
+    ADDI   R3, R3, #1
+    SUBI   R1, R1, #1
+    JMP    cpy
+wn:
+    LOAD   R2, #0
+    STOREI R2, R3
+    LOAD   R0, dst
+    SYSCALL 3
+    SYSCALL 6
+    HALT`,
+shadow_probe:`; 09_shadow_probe.nca — Shadow Regime detection demo
+; Run with SUBSTRATE mode ON to observe the S flag.
+; CLRS clears S so you can isolate sections.
+;
+; The elastic limit is digit 4. Digit 5+ crosses the Voronoi
+; boundary of the Golay packing sphere → S latches to 1.
+
+    CLRS
+    LOAD R0, #3
+    LOAD R1, #1
+    ADD  R2, R0, R1      ; result=4, still Phenomenal (digit 4)
+    SYSCALL 7            ; S=0 in substrate mode
+    CLRS
+
+    LOAD R0, #5          ; digit 5 > 4 → S latches NOW
+    SYSCALL 7            ; S=1
+    CLRS
+
+    LOAD R0, #1836       ; proton — digits [0,9,0,1]: cell[1]=9 > 4 → SHADOW
+    LOAD R1, #1839       ; neutron
+    ADD  R2, R0, R1
+    SYSCALL 7
+
+    MOV  R0, R2
+    SYSCALL 1            ; 3675
+    SYSCALL 6
+    HALT`,
+binding_work:`; 10_binding_work.nca — Nucleon binding work (LAW_CARRY_WORK_001)
+; Run with SUBSTRATE mode. Observe carry_work in the fingerprint panel.
+; carry_work counts the geometric cost of value assembly in the digit manifold.
+.equ PROTON  1836
+.equ NEUTRON 1839
+
+    CLRS
+    LOAD  R0, #PROTON
+    LOAD  R1, #NEUTRON
+    ADD   R2, R0, R1     ; D-2 deuterium
+    SYSCALL 7
+
+    MULI  R3, R0, #2     ; 2 protons
+    MULI  R4, R1, #2     ; 2 neutrons
+    ADD   R5, R3, R4     ; He-4
+
+    MOV   R0, R2
+    SYSCALL 1            ; 3675
+    SYSCALL 6
+    MOV   R0, R5
+    SYSCALL 1            ; 7350
+    SYSCALL 6
+    SYSCALL 7
+    HALT`,
+
+// ═══ UBP TRIAD EXAMPLES (Leech · Monster · Barnes-Wall) ══════════════════
+leech_octad:`; 11_leech_octad.nca — Lift Golay octads to Leech lattice points
+; SYSCALL 8 expands the i-th Golay octad into 128 Leech Λ₂₄ points
+; and reports the symmetry tax of the first lifted point.
+; Each octad has squared norm 32 in scaled coords (= norm 4 in physical space).
+.equ COUNT 5
+    LOAD R1, #0
+    LOAD R2, #COUNT
+loop:
+    MOV  R0, R1
+    SYSCALL 8           ; print octad bits + tax, R0 = tax*1e6
+    ADDI R1, R1, #1
+    SUBI R2, R2, #1
+    CMPI R2, 0
+    JG   loop
+    HALT`,
+
+leech_health:`; 12_leech_health.nca — Tetradic ontological health (LAW_SUBSTRATE_005)
+; The Leech lattice partitions 24 coords into 4 layers of 6:
+;   Reality · Info · Activation · Potential
+; This walks 8 octads and reports their health profile.
+.equ COUNT 8
+    LOAD R1, #137       ; start at octad #137
+    LOAD R2, #COUNT
+loop:
+    MOV  R0, R1
+    SYSCALL 10          ; ontological health
+    ADDI R1, R1, #17
+    SUBI R2, R2, #1
+    CMPI R2, 0
+    JG   loop
+    HALT`,
+
+triad_activate:`; 13_triad_activate.nca — Light up Golay → Leech → Monster
+; The triad activates progressively as more registers hold non-zero state.
+; Run with SUBSTRATE mode for the full geometric backing.
+; SYSCALL 12 reports activation level (0-3) into R0.
+
+    SYSCALL 12          ; baseline (typically level 1: Golay only)
+
+    LOAD R0, #1836      ; proton
+    LOAD R1, #1839      ; neutron
+    LOAD R2, #137       ; alpha-related
+    LOAD R3, #196883    ; Monster minimum representation
+    LOAD R4, #196884    ; Moonshine number (1+196883)
+    LOAD R5, #759       ; Golay octad count
+    LOAD R6, #4096      ; Golay codeword count
+    SYSCALL 12          ; should now reach level 3
+
+    SYSCALL 7           ; dump full state
+    HALT`,
+
+bw_audit:`; 14_bw_audit.nca — Barnes-Wall 256D macro-stability audit
+; SYSCALL 11 fingerprints the entire CPU state, lifts it to 256D via the
+; recursive |u|u+v| construction, snaps to lattice, and reports macro-NRCI.
+; The relative coherence (macro/micro) is the geometric clarity of the program.
+
+    LOAD R0, #1836
+    LOAD R1, #1839
+    LOAD R2, #2738      ; carbon-12 mass
+    LOAD R3, #137
+    SYSCALL 11          ; clean state — high coherence expected
+
+    LOAD R0, #999999    ; introduce noise
+    XOR  R1, R1, R0
+    SYSCALL 11          ; noisy state — macro-NRCI shifts
+
+    SYSCALL 7
+    HALT`,
+
+monster_walk:`; 15_monster_walk.nca — Walk the 26 sporadic simple groups
+; The Happy Family (20) are Monster subquotients; 6 are pariahs (J1,J3,J4,Ru,Ly,ON).
+; Index 18 = M (the Monster itself), 19 = J2 (Hall-Janko, also happy).
+.equ N 26
+    LOAD R1, #0
+    LOAD R2, #N
+loop:
+    MOV  R0, R1
+    SYSCALL 13
+    ADDI R1, R1, #1
+    SUBI R2, R2, #1
+    CMPI R2, 0
+    JG   loop
+    HALT`,
+
+particle_physics:`; 16_particle_physics.nca — 13D Sink Protocol predictions
+; Computes alpha⁻¹, proton/e⁻, muon/e⁻ ratios using Particles.L = (π·φ·e mod 1)/13.
+; Predictions are scaled by 1e6 for integer storage.
+; Compare to: 137035999 (alpha), 1836152670 trunc, 206768280 trunc.
+
+    LOAD R0, #0
+    SYSCALL 14          ; alpha_inv → R0 × 1e6
+    SYSCALL 1
+    SYSCALL 6
+
+    LOAD R0, #1
+    SYSCALL 14          ; proton/e⁻ × 1e6
+    SYSCALL 1
+    SYSCALL 6
+
+    LOAD R0, #2
+    SYSCALL 14          ; muon/e⁻ × 1e6
+    SYSCALL 1
+    SYSCALL 6
+    HALT`,
+
+lattice_probe:`; 17_lattice_probe.nca — Find the Leech octad nearest to an arbitrary integer
+; Folds R0 into a 24-bit signature, then searches all 759 octads for the
+; closest one in Hamming distance.  This is the geometric shadow of the value.
+
+    LOAD R0, #1836      ; proton
+    SYSCALL 15
+    LOAD R0, #137
+    SYSCALL 15
+    LOAD R0, #196883    ; Monster min-rep
+    SYSCALL 15
+    LOAD R0, #5040      ; 7!
+    SYSCALL 15
+    LOAD R0, #2718      ; e × 1000
+    SYSCALL 15
+    HALT`,
+
+higher_math:`; 18_higher_math.nca — Mathematics beyond arithmetic
+; Uses the triad as a SUBSTRATE for non-arithmetic operations:
+;  • Group-theoretic walk (Monster sporadics)
+;  • Lattice geometry (Leech tax of consecutive octads)
+;  • 256D coherence audit (Barnes-Wall fingerprint)
+; This is the 'next level': computation that cannot be expressed in plain
+; integer arithmetic alone, but emerges from the geometric substrate.
+
+    SYSCALL 12          ; verify triad state
+
+    LOAD R0, #18        ; Monster itself
+    SYSCALL 13
+    LOAD R0, #5         ; Co1 (Conway, Leech automorphism)
+    SYSCALL 13
+    LOAD R0, #4         ; M24 (Mathieu, Golay automorphism)
+    SYSCALL 13
+
+    LOAD R0, #0         ; first octad lattice tax
+    SYSCALL 8
+    LOAD R0, #379       ; middle octad
+    SYSCALL 8
+    LOAD R0, #758       ; last octad
+    SYSCALL 8
+
+    SYSCALL 11          ; 256D audit of the resulting state
+    HALT`,
+
+triad_demo:`; 19_triad_demo.nca — Showcase: the full Golay→Leech→Monster pipeline
+; This program touches all three layers of the triad in sequence.
+;
+;  1. Golay [24,12,8] underpins every register (substrate mode)
+;  2. Leech Λ₂₄ lifts a Golay octad into 128 lattice points (norm²=32)
+;  3. Monster contains M24 × Co0 as substructures — we walk the connection
+;  4. Barnes-Wall 256 audits the macro-coherence of the final state
+
+    LOAD R0, #4         ; M24
+    SYSCALL 13
+    LOAD R0, #0         ; lift Golay octad #0 to Leech
+    SYSCALL 8
+    LOAD R0, #5         ; Co1 (Leech ↔ Conway)
+    SYSCALL 13
+    LOAD R0, #18        ; the Monster
+    SYSCALL 13
+    SYSCALL 12          ; triad activation status
+    SYSCALL 11          ; 256D Barnes-Wall audit
+    HALT`,
+};
+
+// ─── UI STATE ──────────────────────────────────────────────────────────────
+let cMode='plain',tracing=false,cpu=null,prog=null,stepMode=false;
+let hist=[],histIdx=-1,rTab='mem';
+
+// ─── TERMINAL ──────────────────────────────────────────────────────────────
+function tA(txt,cls=''){if(!txt)return;const el=document.getElementById('tout');const sp=document.createElement('span');sp.className=cls;sp.textContent=txt;el.appendChild(sp);el.scrollTop=el.scrollHeight;}
+function tL(txt,cls=''){tA(txt+'\n',cls);}
+function tClear(){document.getElementById('tout').innerHTML='';}
+function tHelp(){
+  tL('');
+  tL('  TERMINAL COMMANDS','t-lb');
+  tL('  run              run editor program (Ctrl+Enter)','t-in');
+  tL('  step             assemble + enter step-by-step mode','t-in');
+  tL('  n                execute next instruction (step mode)','t-in');
+  tL('  reset            reset CPU to initial state','t-in');
+  tL('  sub / plain      switch substrate / plain mode','t-in');
+  tL('  trace            toggle instruction trace recording','t-in');
+  tL('  load <name>      load example (hello, gcd, fibonacci…)','t-in');
+  tL('  input <n…>       pre-load SYSCALL 4 READ_INT queue','t-in');
+  tL('  digits <n>       show base-12 decomposition + Golay analysis','t-in');
+  tL('  carries <a> <b>  count base-4 carry events (LAW_CARRY_WORK_001)','t-in');
+  tL('  golay            print full Golay displacement table','t-in');
+  tL('  fp               print substrate fingerprint','t-in');
+  tL('  reg <0-7>        inspect register in detail','t-in');
+  tL('  disasm           disassemble current program','t-in');
+  tL('  docs             open documentation','t-in');
+  tL('  clear            clear terminal','t-in');
+  tL('','t-in');
+  tL('  TRIAD COMMANDS (Leech · Monster · Barnes-Wall)','t-lb');
+  tL('  triad            print triad activation state','t-in');
+  tL('  octad <i>        lift Golay octad #i to 128 Leech points','t-in');
+  tL('  leech            Leech Λ₂₄ statistics','t-in');
+  tL('  health <i>       tetradic ontological health of octad #i','t-in');
+  tL('  monster [i]      list 26 sporadic groups (or detail one)','t-in');
+  tL('  bw [dim]         Barnes-Wall audit at dim (32/64/128/256)','t-in');
+  tL('  particles        13D Sink particle physics predictions','t-in');
+  tL('  probe <n>        find Leech octad nearest to integer n','t-in');
+  tL('  rank <i> [c]     stability rank of octad #i (lowest tax wins)','t-in');
+  tL('');
+}
+function tKey(e){
+  if(e.key==='Enter'){e.preventDefault();tSubmit();}
+  if(e.key==='ArrowUp'){e.preventDefault();if(histIdx<hist.length-1){histIdx++;document.getElementById('tinput').value=hist[hist.length-1-histIdx];}}
+  if(e.key==='ArrowDown'){e.preventDefault();if(histIdx>0){histIdx--;document.getElementById('tinput').value=hist[hist.length-1-histIdx];}else{histIdx=-1;document.getElementById('tinput').value='';}}
+}
+function tSubmit(){
+  const el=document.getElementById('tinput');const raw=el.value.trim();el.value='';histIdx=-1;
+  if(!raw)return;hist.push(raw);tL('ncavm> '+raw,'t-pr');tExec(raw);
+}
+function tExec(raw){
+  const parts=raw.trim().split(/\s+/),cmd=parts[0].toLowerCase();
+  switch(cmd){
+    case'run':doRun();break;
+    case'step':doStepInit();break;
+    case'n':case'next':if(stepMode)doStep();else tL('Not in step mode — type "step" first','t-wn');break;
+    case'reset':doReset();break;
+    case'sub':case'substrate':setMode('substrate');tL('Substrate mode ON.','t-sb');break;
+    case'plain':setMode('plain');tL('Plain mode ON.','t-in');break;
+    case'trace':toggleTrace();break;
+    case'clear':tClear();break;
+    case'help':tHelp();break;
+    case'docs':openDocs();break;
+    case'load':{const nm=parts[1];if(!nm){tL('Usage: load <name>','t-wn');break;}const k=Object.keys(EX).find(k=>k===nm||k.startsWith(nm));if(!k){tL('Unknown example. Try: '+Object.keys(EX).join(' '),'t-er');break;}loadEx(k);tL('Loaded: '+k,'t-in');break;}
+    case'input':{if(!cpu){tL('No CPU — run a program first.','t-wn');break;}const ns=parts.slice(1).map(Number).filter(n=>!isNaN(n));if(!ns.length){tL('Usage: input <n1> <n2> …','t-wn');break;}cpu.input_queue.push(...ns);tL('READ_INT queue: ['+cpu.input_queue.join(', ')+']','t-in');break;}
+    case'digits':{const n=parseInt(parts[1],10);if(isNaN(n)){tL('Usage: digits <integer>','t-wn');break;}const d=BALU.td(Math.abs(n));tL('digits('+n+') = ['+d.join(', ')+']  (little-endian base-12)','t-sb');d.forEach((dig,i)=>{const info=GolayEngine.dinfo(dig);tL('  cell['+i+']: digit='+dig+'  disp='+info.disp+'  '+info.regime+(info.smc?'':' ← SHADOW Regime'),dig>4?'t-wn':'t-in');});break;}
+    case'carries':{const a=parseInt(parts[1],10),b=parseInt(parts[2],10);if(isNaN(a)||isNaN(b)){tL('Usage: carries <a> <b>','t-wn');break;}tL('base4_carries('+a+', '+b+') = '+BALU.base4C(a,b)+' events (LAW_CARRY_WORK_001)','t-sb');break;}
+    case'golay':{const gi=GolayEngine.info();tL('');tL('  Golay [24,12,8] — PERFECT_V1: '+gi.vector+'  hw='+gi.hw+'  sw='+gi.baseSW,'t-sb');tL('  NRCI = 10/(10+|'+gi.hw+'-12|) = '+gi.nrci.toFixed(6)+'   (LAW_SHADOW_PROCESSOR_001)','t-in');tL('  digit  disp  sm_consistent  regime','t-lb');tL('  ───────────────────────────────────────','t-sp');for(let d=0;d<12;d++){const info=GolayEngine.dinfo(d);tL('  '+String(d).padStart(5)+'  '+String(info.disp).padStart(4)+'  '+String(info.smc).padEnd(13)+'  '+info.regime+(d===4?' ← elastic limit':''),d<=4?'t-in':'t-wn');}tL('');break;}
+    case'fp':{if(!cpu){tL('No CPU state.','t-wn');break;}const fp=cpu.sfp();if(fp.mode==='plain'){tL('Plain mode: no fingerprint. Enable substrate.','t-wn');break;}tL('');tL('  SUBSTRATE FINGERPRINT','t-sb');tL('  NRCI            '+fp.nrci.toFixed(6),'t-in');tL('  carry_work      '+fp.total_carry_work,'t-in');tL('  shadow_flag     '+fp.shadow_flag,'t-in');tL('  shadow_registers  '+(fp.shadow_registers.length?fp.shadow_registers.map(i=>'R'+i).join(' '):'none'),'t-in');tL('  magnitude_sha16 '+fp.magnitude_sha,'t-in');tL('');break;}
+    case'reg':{if(!cpu){tL('No CPU.','t-wn');break;}const n=parseInt(parts[1],10);if(isNaN(n)||n<0||n>7){tL('Usage: reg <0-7>','t-wn');break;}const v=cpu.rr(n),r=cpu.regs[n],d=r.digs();tL('');tL('  R'+n+' = '+v+' ('+(cpu._sg[n]?'negative':'positive')+')','t-sb');tL('  Base-12 digits: ['+d.join(', ')+']','t-in');if(cMode==='substrate'){tL('  shadow_active: '+r.shadow_active,'t-in');tL('  carry_work: '+r.carry_work,'t-in');tL('  Golay cell detail:','t-lb');d.forEach((dig,i)=>{const info=GolayEngine.dinfo(dig);tL('    cell['+i+']: digit='+String(dig).padStart(2)+' disp='+info.disp+' '+info.regime+(info.smc?'':' ◄ SHADOW'),dig>4?'t-wn':'t-in');});}tL('');break;}
+    // ─── TRIAD TERMINAL COMMANDS ──────────────────────────────────
+    case'triad':{
+      const active=cpu?Array.from({length:7},(_,i)=>cpu.rr(i)).filter(v=>v!==0).length:0;
+      const t=MonsterEngine.triadState(12+active,MonsterEngine.SPORADIC.length);
+      tL('');tL('  TRIAD ACTIVATION STATE','t-sb');
+      tL('  Golay   [24,12,8]   '+(t.golay_active?'✓ ACTIVE':'✗ inert')+'   ('+t.stable_count+'/'+t.thresholds.golay+' stable)','t-in');
+      tL('  Leech    Λ₂₄         '+(t.leech_active?'✓ ACTIVE':'✗ inert')+'   ('+t.stable_count+'/'+t.thresholds.leech+' stable)','t-in');
+      tL('  Monster  M          '+(t.monster_active?'✓ ACTIVE':'✗ inert')+'   ('+t.sporadic_count+'/'+t.thresholds.monster+' sporadic)','t-in');
+      tL('  Activation level: '+t.level+'/3','t-sb');
+      tL('');break;
+    }
+    case'leech':{
+      const s=LeechEngine.stats();
+      tL('');tL('  LEECH LATTICE Λ₂₄','t-sb');
+      tL('  dimension          '+s.dimension,'t-in');
+      tL('  scale_factor       '+s.scale_factor+'  (squared norms scaled ×8)','t-in');
+      tL('  kissing_number     '+s.kissing_number.toLocaleString(),'t-in');
+      tL('  octad_seed_count   '+s.octads+'  (weight-8 Golay codewords)','t-in');
+      tL('  Y                  '+s.Y.toFixed(10)+'   = 1/(π + 2/π)','t-in');
+      tL('  Y⁻¹                 '+s.Y_INV.toFixed(10),'t-in');
+      tL('');break;
+    }
+    case'octad':{
+      const i=parseInt(parts[1],10);if(isNaN(i)){tL('Usage: octad <i>  (i in 0..758)','t-wn');break;}
+      const oct=GolayExt.octads();const o=oct[((i%oct.length)+oct.length)%oct.length];
+      const pts=LeechEngine.expandOctad(o);
+      tL('');tL('  OCTAD #'+i+' (Golay weight-8 codeword)','t-sb');
+      tL('  bits        '+o.join(''),'t-in');
+      tL('  active idx  ['+o.map((b,k)=>b?k:-1).filter(k=>k>=0).join(',')+']','t-in');
+      tL('  expanded    '+pts.length+' Leech points (±2 with even neg parity)','t-in');
+      tL('  squared norm  '+LeechEngine.normSqScaled(pts[0])+' (scaled) = '+LeechEngine.normSq(pts[0])+' (actual)','t-in');
+      tL('  symmetry tax  '+LeechEngine.symmetryTax(pts[0]).toFixed(6),'t-in');
+      tL('  sample point  ['+pts[0].join(',')+']','t-in');
+      tL('');break;
+    }
+    case'health':{
+      const i=parseInt(parts[1],10);if(isNaN(i)){tL('Usage: health <i>','t-wn');break;}
+      const oct=GolayExt.octads();const o=oct[((i%oct.length)+oct.length)%oct.length];
+      const pts=LeechEngine.expandOctad(o);
+      tL('');tL('  ONTOLOGICAL HEALTH — octad #'+i+' (LAW_SUBSTRATE_005)','t-sb');
+      const samples=[0,32,64,96,127];
+      samples.forEach(j=>{const h=LeechEngine.ontologicalHealth(pts[j]);
+        tL('  pt#'+String(j).padStart(3)+'  R='+h.Reality.toFixed(3)+' I='+h.Info.toFixed(3)+' A='+h.Activation.toFixed(3)+' P='+h.Potential.toFixed(3)+'  | NRCI='+h.Global_NRCI.toFixed(3),'t-in');
+      });tL('');break;
+    }
+    case'monster':{
+      const i=parts[1]?parseInt(parts[1],10):null;
+      if(i!=null&&!isNaN(i)){
+        const sp=MonsterEngine.SPORADIC;const g=sp[((i%sp.length)+sp.length)%sp.length];
+        tL('');tL('  Sporadic #'+i+'  '+g.n,'t-sb');
+        tL('  order  '+g.ord,'t-in');
+        tL('  family '+(g.hf?'Happy Family (Monster subquotient)':'PARIAH'),g.hf?'t-in':'t-wn');
+        tL('  role   '+g.role,'t-in');tL('');break;
+      }
+      tL('');tL('  THE 26 SPORADIC SIMPLE GROUPS','t-sb');
+      tL('  idx  name      order             family    role','t-lb');
+      MonsterEngine.SPORADIC.forEach((g,k)=>{
+        tL('  '+String(k).padStart(3)+'  '+g.n.padEnd(8)+'  '+g.ord.padEnd(16)+'  '+(g.hf?'Happy ':'Pariah')+'    '+g.role,g.hf?'t-in':'t-wn');
+      });tL('  min_rep='+MonsterEngine.MIN_REP+'   moonshine='+MonsterEngine.MOONSHINE,'t-sb');
+      tL('');break;
+    }
+    case'bw':{
+      let dim=parts[1]?parseInt(parts[1],10):256;
+      if(![32,64,128,256,512].includes(dim)){tL('Usage: bw [32|64|128|256|512]','t-wn');break;}
+      let fp;
+      if(cpu){const parts2=[...cpu.regs.map(r=>r.read()),...Array.from({length:32},(_,i)=>cpu.mem[i].read())];fp=SHA256.hash(parts2.join(','));}
+      else fp=SHA256.hash('idle:'+Date.now());
+      const a=BarnesWall.audit(fp,GolayEngine.NRCI,dim);
+      tL('');tL('  BARNES-WALL '+dim+'D AUDIT','t-sb');
+      tL('  fingerprint        '+fp.slice(0,16)+'…','t-in');
+      tL('  micro_nrci         '+a.micro_nrci.toFixed(6)+'  (Golay anchor)','t-in');
+      tL('  macro_nrci ('+dim+'D) '+a.macro_nrci.toFixed(6)+'  (snapped lattice)','t-in');
+      tL('  noisy_nrci         '+a.noisy_nrci.toFixed(6),'t-in');
+      tL('  decoder_gain       '+a.decoder_gain.toFixed(6),'t-in');
+      tL('  relative_coh       '+a.relative_coherence.toFixed(6)+'  (anchor '+a.anchor.toFixed(6)+')','t-in');
+      tL('  clarity            '+a.clarity,a.clarity==='HIGH'?'t-sb':'t-wn');
+      tL('  seed_hw / vec_hw   '+a.seed_hw+' / '+a.vector_hw,'t-in');
+      tL('  vec_norm_sq        '+a.vector_norm_sq,'t-in');
+      tL('');break;
+    }
+    case'particles':{
+      const s=Particles.summary();
+      tL('');tL('  13D SINK PROTOCOL  — particle physics predictions','t-sb');
+      tL('  monad      π·φ·e   = '+s.monad.toFixed(10),'t-in');
+      tL('  wobble     monad % 1 = '+s.wobble.toFixed(10),'t-in');
+      tL('  L          wobble/13 = '+s.L.toFixed(12),'t-in');
+      tL('  L_s        L·29/24   = '+s.L_s.toFixed(12),'t-in');
+      tL('','t-in');
+      tL('  observable        predicted        target          err %','t-lb');
+      tL('  alpha⁻¹         '+s.alpha_inv.toFixed(6).padStart(14)+'   '+String(s.alpha_target).padStart(12)+'   '+s.alpha_err_pct.toFixed(5),'t-in');
+      tL('  proton/e⁻      '+s['proton/e-'].toFixed(6).padStart(14)+'   '+String(s.proton_target).padStart(12)+'   '+s.proton_err_pct.toFixed(5),'t-in');
+      tL('  muon/e⁻        '+s['muon/e-'].toFixed(6).padStart(14)+'   '+String(s.muon_target).padStart(12)+'   '+s.muon_err_pct.toFixed(5),'t-in');
+      tL('');break;
+    }
+    case'probe':{
+      const n=parseInt(parts[1],10);if(isNaN(n)){tL('Usage: probe <integer>','t-wn');break;}
+      const sig=new Array(24).fill(0);for(let b=0;b<24;b++)sig[b]=(n>>(b%32))&1;
+      const m=LeechEngine.nearestOctadIdx(sig);
+      const o=GolayExt.octads()[m.idx];
+      tL('');tL('  LATTICE PROBE — '+n,'t-sb');
+      tL('  signature      '+sig.join(''),'t-in');
+      tL('  nearest octad  #'+m.idx+'  ('+o.join('')+')','t-in');
+      tL('  Hamming dist   '+m.distance+(m.distance===0?'  (perfect match)':''),m.distance===0?'t-sb':'t-in');
+      tL('  octad tax      '+LeechEngine.symmetryTax(LeechEngine.expandOctad(o)[0]).toFixed(6),'t-in');
+      tL('');break;
+    }
+    case'rank':{
+      const i=parseInt(parts[1],10);if(isNaN(i)){tL('Usage: rank <i> [compactness 0..13]','t-wn');break;}
+      const c=parts[2]!=null?parseFloat(parts[2]):null;
+      const oct=GolayExt.octads();const o=oct[((i%oct.length)+oct.length)%oct.length];
+      const pts=LeechEngine.expandOctad(o);
+      const ranked=LeechEngine.rankByStability(pts);
+      tL('');tL('  STABILITY RANKING — octad #'+i,'t-sb');
+      tL('  most stable points (lowest symmetry tax):','t-in');
+      for(let k=0;k<5;k++){tL('   #'+k+'  tax='+ranked[k].tax.toFixed(6)+'  ['+ranked[k].p.join(',')+']','t-in');}
+      tL('  least stable: tax='+ranked[ranked.length-1].tax.toFixed(6),'t-in');
+      if(c!=null){
+        const tBase=LeechEngine.symmetryTax(pts[0]);
+        const tAdj=LeechEngine.symmetryTax(pts[0],c);
+        tL('  volumetric rebate (C='+c+'): '+tBase.toFixed(6)+' → '+tAdj.toFixed(6),'t-sb');
+      }
+      tL('');break;
+    }
+    case'disasm':{if(!prog){tL('No program assembled.','t-wn');break;}tL('');tL('  DISASSEMBLY','t-lb');const RL=Object.fromEntries(Object.entries(prog.labels).map(([k,v])=>[v,k]));prog.instrs.forEach((ins,i)=>{const mn=ASM.disasm(ins,prog.labels);const lbl=RL[i]?RL[i]+':':'';tL('  '+String(i).padStart(4,'0')+'  '+lbl.padEnd(12)+' '+mn,cpu&&i===cpu.pc?'t-st':'t-in');});tL('');break;}
+    default:tL("Unknown command '"+cmd+"' — type 'help'",'t-er');
+  }
+}
+
+// ─── EXECUTION ────────────────────────────────────────────────────────────
+function setStat(s,cls=''){const el=document.getElementById('stat-chip');el.textContent=s;el.className=cls;}
+function showErr(m){const el=document.getElementById('errbar');el.textContent='⚠ '+m;el.classList.add('on');}
+function clearErr(){const el=document.getElementById('errbar');el.classList.remove('on');el.textContent='';}
+
+function mkCPU(){return new CPU({substrate_mode:cMode==='substrate',trace:tracing});}
+function ldMem(c,p){for(const[a,v] of Object.entries(p.MI))c.wm(parseInt(a),v);}
+
+function doRun(){
+  clearErr();let p;
+  try{p=ASM.assemble(document.getElementById('editor').value);prog=p;}
+  catch(e){showErr(e.message);tL('ASM ERROR: '+e.message,'t-er');setStat('ASM ERR','err');return;}
+  if(!p.instrs.length){showErr('No instructions.');return;}
+  stepMode=false;exitHL();
+  cpu=mkCPU();ldMem(cpu,p);
+  setStat('RUNNING…','run');
+  document.getElementById('run-btn').classList.add('going');
+  let info;
+  try{info=cpu.run(p.instrs);}
+  catch(e){showErr(e.message);tL('ERROR: '+e.message,'t-er');setStat('ERROR','err');document.getElementById('run-btn').classList.remove('going');document.getElementById('run-btn').textContent='▶ RUN';updUI(cpu,null);return;}
+  document.getElementById('run-btn').classList.remove('going');
+  document.getElementById('run-btn').textContent='▶ RUN';
+  setStat('DONE','done');
+  if(info.output)tL(info.output.replace(/\n$/,''),'t-ou');
+  tL('  cycles: '+info.cycles+'  ips: '+fIPS(info.ips)+'  time: '+fT(info.elapsed_s),'t-in');
+  if(cMode==='substrate'){const fp=cpu.sfp();tL('  S='+fp.shadow_flag+'  carry_work='+fp.total_carry_work+'  NRCI='+fp.nrci.toFixed(4)+'  sha16='+fp.magnitude_sha,'t-sb');}
+  if(tracing&&info.trace_hash)tL('  trace_hash: '+info.trace_hash,'t-in');
+  updUI(cpu,info);
+  if(tracing)rendTrace(cpu.trace_log,p.labels);
+}
+
+function doStepInit(){
+  clearErr();let p;
+  try{p=ASM.assemble(document.getElementById('editor').value);prog=p;}
+  catch(e){showErr(e.message);tL('ASM ERROR: '+e.message,'t-er');return;}
+  if(!p.instrs.length){showErr('No instructions.');return;}
+  cpu=mkCPU();ldMem(cpu,p);stepMode=true;
+  setStat('STEP','stp');
+  tL('');tL('Step mode. '+p.instrs.length+' instructions.','t-sb');
+  tL('Type "n" or click ⊳ STEP for each instruction.','t-in');
+  tL('  PC    INSTRUCTION             FLAGS','t-lb');
+  tL('  ─────────────────────────────────────','t-sp');
+  updUI(cpu,null);document.getElementById('step-btn').disabled=false;
+}
+function doStep(){
+  if(!stepMode||!cpu||!prog){if(!stepMode)doStepInit();return;}
+  if(cpu.halted){tL('Halted. Type "reset" or "run" to restart.','t-wn');return;}
+  const pc=cpu.pc;if(pc<0||pc>=prog.instrs.length){tL('PC out of range.','t-wn');stepMode=false;return;}
+  const ins=prog.instrs[pc];const prevOut=cpu._out;const prevFL={...cpu.flags};
+  try{cpu.execute(ins);cpu.cycles++;}
+  catch(e){showErr(e.message);tL('ERROR: '+e.message,'t-er');setStat('ERROR','err');updUI(cpu,null);return;}
+  const mn=ASM.disasm(ins,prog.labels);
+  const fs='Z'+cpu.flags.Z+'N'+cpu.flags.N+'C'+cpu.flags.C+'V'+cpu.flags.V+'S'+cpu.flags.S;
+  tL('  '+String(pc).padStart(4,'0')+' '+mn.padEnd(24)+' ['+fs+']','t-st');
+  if(cpu._out.length>prevOut.length)tL(cpu._out.slice(prevOut.length).replace(/\n$/,''),'t-ou');
+  updUI(cpu,null);hlStep(pc);
+  if(cpu.halted){setStat('DONE','done');stepMode=false;exitHL();tL('Halted. Cycles: '+cpu.cycles+'.','t-sb');if(cMode==='substrate'){const fp=cpu.sfp();tL('S='+fp.shadow_flag+' carry_work='+fp.total_carry_work+' sha16='+fp.magnitude_sha,'t-sb');}}
+}
+function doReset(){
+  if(cpu)cpu.reset();else cpu=mkCPU();
+  stepMode=false;exitHL();clearErr();setStat('RESET');
+  tL('CPU reset.','t-in');updUI(cpu,null);document.getElementById('step-btn').disabled=false;
+}
+
+function hlStep(pc){
+  const ed=document.getElementById('editor');const lines=ed.value.split('\n');let ic=0,li=0;
+  for(let i=0;i<lines.length;i++){let ln=lines[i].replace(/;.*$/,'').trim();while(ln.match(/^([A-Za-z_]\w*):\s*/)){const m=ln.match(/^([A-Za-z_]\w*):\s*/);ln=ln.slice(m[0].length);}if(!ln||ln.startsWith('.'))continue;const t=ln.split(/\s+/);if(!t[0])continue;if(t[0].toUpperCase()in ASM.OPS){if(ic===pc){li=i;break;}ic++;}}
+  const lh=parseFloat(getComputedStyle(ed).lineHeight)||19;const hl=document.getElementById('step-hl');hl.style.display='block';hl.style.top=(li*lh+10)+'px';hl.style.height=lh+'px';
+}
+function exitHL(){document.getElementById('step-hl').style.display='none';}
+
+// ─── MODE / TRACE ─────────────────────────────────────────────────────────
+function setMode(m){
+  cMode=m;
+  document.getElementById('btn-plain').classList.toggle('active',m==='plain');
+  document.getElementById('btn-sub').classList.toggle('active',m==='substrate');
+  document.getElementById('btn-sub').classList.toggle('sub-on',m==='substrate');
+  document.getElementById('ss').classList.toggle('on',m==='substrate');
+  document.getElementById('gv').classList.toggle('on',m==='substrate');
+  updDigCells();
+}
+function toggleTrace(){
+  tracing=!tracing;
+  document.getElementById('tbtn').classList.toggle('on',tracing);
+  tL('Trace '+(tracing?'ON':'OFF')+'.','t-in');
+}
+
+// ─── UI UPDATE ────────────────────────────────────────────────────────────
+function updUI(c,info){
+  for(let i=0;i<8;i++){
+    const v=c.rr(i),reg=c.regs[i];
+    const card=document.getElementById('rc'+i);
+    const rv=document.getElementById('rv'+i);
+    const rc=document.getElementById('rcs'+i);
+    const rs=document.getElementById('rst'+i);
+    rv.textContent=String(v);
+    card.className='rc';
+    if(cMode==='substrate'){
+      const d=reg.digs();rc.innerHTML='';
+      d.forEach((dv,ci)=>{const el=document.createElement('div');el.className='dc '+(dv===0?'z':dv<=4?'p':'s');el.title='cell['+ci+']='+dv+' '+(dv<=4?'Phenomenal':'SHADOW disp='+GolayEngine.DISP[dv]);el.textContent=dv;rc.appendChild(el);});
+      if(reg.shadow_active){card.classList.add('sh');rs.style.display='';rs.textContent='SHADOW';}
+      else if(v!==0){card.classList.add('hi');rs.style.display='none';}
+      else rs.style.display='none';
+    }else{rc.innerHTML='';rs.style.display='none';if(v!==0)card.classList.add('hi');}
+  }
+  ['Z','N','C','V'].forEach(f=>{const el=document.getElementById('fl'+f);el.textContent=String(c.flags[f]);el.className='fl'+(c.flags[f]?' on':'');});
+  const sEl=document.getElementById('flS');sEl.textContent=String(c.flags.S);sEl.className='fl'+(c.flags.S?' son':'');
+  document.getElementById('v-pc').textContent=c.pc.toString().padStart(4,'0');
+  document.getElementById('v-cyc').textContent=info?info.cycles.toLocaleString():(c.cycles||'—');
+  document.getElementById('v-ips').textContent=info?fIPS(info.ips):'—';
+  if(tracing&&info?.trace_hash)document.getElementById('v-hash').textContent=info.trace_hash.slice(0,12)+'…';
+  if(cMode==='substrate'){
+    const fp=c.sfp();
+    document.getElementById('sv-nrci').textContent=fp.nrci.toFixed(4);
+    document.getElementById('sv-cw').textContent=String(fp.total_carry_work);
+    document.getElementById('sv-sr').textContent=fp.shadow_registers.length?fp.shadow_registers.map(i=>'R'+i).join(' '):'none';
+    document.getElementById('sv-sha').textContent=fp.magnitude_sha||'—';
+    updGV(c);
+  }
+  updTriad(c);
+  if(rTab==='mem')rendMem(c);
+}
+
+// ─── TRIAD STATUS PANEL UPDATE ────────────────────────────────────────────
+function updTriad(c){
+  // Golay always lit — substrate is always loaded.
+  const golay=document.getElementById('tl-golay');
+  const leech=document.getElementById('tl-leech');
+  const monster=document.getElementById('tl-monster');
+  const bw=document.getElementById('tl-bw');
+  const root=document.getElementById('triad');
+  golay.classList.add('on');
+
+  // Leech 'on' when substrate active OR any non-zero register state.
+  let active=0;
+  if(c)for(let i=0;i<7;i++)if(c.rr(i)!==0)active++;
+  const leechActive = cMode==='substrate' || active>=2;
+  leech.classList.toggle('on',leechActive);
+  leech.classList.toggle('full',leechActive&&active>=4);
+
+  // Monster 'on' when triad criteria met (sufficient state diversity).
+  const sporadic=MonsterEngine.SPORADIC.length;
+  let stable=12+active;
+  if(cMode==='substrate')stable+=4;
+  if(c&&cMode==='substrate')for(let i=0;i<7;i++)if(c.regs[i].shadow_active)stable++;
+  const t=MonsterEngine.triadState(stable,sporadic);
+  monster.classList.toggle('on',t.monster_active);
+  monster.classList.toggle('full',t.level>=3);
+
+  // BW-256 lit when we have substrate state to audit.
+  let bwNrci=null;
+  if(c&&cMode==='substrate'){
+    try{
+      const parts=[...c.regs.map(r=>r.read()),...Array.from({length:32},(_,i)=>c.mem[i].read())];
+      const fp=SHA256.hash(parts.join(','));
+      const a=BarnesWall.audit(fp,GolayEngine.NRCI,256);
+      bwNrci=a.macro_nrci;
+      document.getElementById('tl-bw-m').textContent='macro-NRCI · '+bwNrci.toFixed(4);
+    }catch(e){document.getElementById('tl-bw-m').textContent='macro-NRCI · ERR';}
+    bw.classList.add('on');
+    if(bwNrci!=null&&bwNrci>=BarnesWall.MACRO_ANCHOR_NRCI)bw.classList.add('full');
+    else bw.classList.remove('full');
+  } else {
+    bw.classList.remove('on');bw.classList.remove('full');
+    document.getElementById('tl-bw-m').textContent='macro-NRCI · —';
+  }
+
+  if(t.level>=3)root.classList.add('armed');else root.classList.remove('armed');
+  document.getElementById('tl-leech-m').textContent='k=196,560 · '+(active>0?(active+' active layers'):'idle');
+  document.getElementById('tl-monster-m').textContent='26 sporadics · '+(t.monster_active?'✓ ARMED':'inert');
+}
+function updDigCells(){if(cpu)updUI(cpu,null);}
+function fIPS(n){if(!isFinite(n))return'∞';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'k';return String(n);}
+function fT(s){if(s<.001)return'<1ms';if(s<1)return(s*1000).toFixed(1)+'ms';return s.toFixed(3)+'s';}
+
+// ─── GOLAY VIZ ────────────────────────────────────────────────────────────
+function updGV(c){
+  const svg=document.getElementById('gv-svg');const W=500,bw=30,gap=8,sx=10,by=40,mh=28;
+  const ad=new Set();if(c&&cMode==='substrate')c.regs.forEach(r=>{if(r.digs)r.digs().forEach(d=>ad.add(d));});
+  const disp=GolayEngine.DISP,mxd=Math.max(...disp,1);
+  let h='<defs><filter id="gl"><feGaussianBlur stdDeviation="1.8" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter></defs>';
+  const lx=sx+4*(bw+gap)+bw+gap/2;
+  h+=`<line x1="${lx}" y1="2" x2="${lx}" y2="${by+8}" stroke="#1a3040" stroke-width="1" stroke-dasharray="3,2"/>`;
+  h+=`<text x="${lx+2}" y="10" fill="#1a3040" font-size="7" font-family="monospace">elastic limit</text>`;
+  for(let d=0;d<12;d++){
+    const x=sx+d*(bw+gap),dp=disp[d],bh=Math.max(3,Math.round((dp/mxd)*mh)),ia=ad.has(d),ip=d<=4;
+    const fill=ip?(ia?'#00e878':'#005a28'):(ia?'#ff3248':'#4a1520');
+    const strk=ip?(ia?'#00e878':'#003a18'):(ia?'#ff3248':'#6a1030');
+    h+=`<rect x="${x}" y="${by-bh}" width="${bw}" height="${bh}" fill="${fill}" stroke="${strk}" stroke-width="1" rx="1"${ia?' filter="url(#gl)"':''} opacity="${ia?1:.65}"/>`;
+    h+=`<text x="${x+bw/2}" y="${by+9}" fill="${ip?'#3a7050':'#703040'}" font-size="8" text-anchor="middle" font-family="monospace">${d}</text>`;
+    if(dp)h+=`<text x="${x+bw/2}" y="${by-bh-3}" fill="${ip?'#00b050':'#cc2040'}" font-size="7" text-anchor="middle" font-family="monospace">${dp}</text>`;
+    if(ia)h+=`<circle cx="${x+bw/2}" cy="${by-bh-10}" r="3" fill="${ip?'#00e878':'#ff3248'}"/>`;
+  }
+  h+=`<text x="${sx}" y="${by+18}" fill="#205040" font-size="7" font-family="monospace">PHENOMENAL →</text>`;
+  h+=`<text x="${lx+4}" y="${by+18}" fill="#602030" font-size="7" font-family="monospace">← SHADOW REGIME</text>`;
+  svg.innerHTML=h;
+}
+
+// ─── MEMORY ───────────────────────────────────────────────────────────────
+function rendMem(c){
+  if(!c){document.getElementById('m-tab').innerHTML='<div style="padding:8px;font-size:9px;color:var(--text2)">Run a program to see memory.</div>';return;}
+  let html='';const rows=Math.ceil(c.ms/16);
+  for(let r=0;r<rows;r++){
+    html+=`<div class="mr"><span class="ma">${(r*16).toString(16).toUpperCase().padStart(3,'0')}</span>`;
+    for(let col=0;col<16;col++){const idx=r*16+col;if(idx>=c.ms)break;const v=c.mem[idx].read();const ip=v>=32&&v<127;html+=`<span class="mc${v===0?'':ip?' ch':' nz'}" title="${ip?String.fromCharCode(v)+' ('+v+')':v}">${v}</span>`;}
+    html+='</div>';
+  }
+  document.getElementById('m-tab').innerHTML=html;
+}
+
+// ─── TRACE ────────────────────────────────────────────────────────────────
+function rendTrace(log,L){
+  const el=document.getElementById('tr-tab');if(!log||!log.length){el.innerHTML='<div style="padding:8px;font-size:9px;color:var(--text2)">No trace — enable TRACE and re-run.</div>';return;}
+  const max=Math.min(log.length,600);let html='';
+  for(let i=0;i<max;i++){const t=log[i];const mn=ASM.disasm(t.ins,L);const fs='Z'+t.fl.Z+'N'+t.fl.N+'C'+t.fl.C+'V'+t.fl.V+'S'+t.fl.S;html+=`<div class="trow"><span class="trpc">${String(t.pc).padStart(4,'0')}</span><span class="trop">${mn}</span><span class="trfl">${fs}</span></div>`;}
+  if(log.length>600)html+=`<div style="font-size:8px;color:var(--text2);padding:4px">…${log.length-600} more</div>`;
+  el.innerHTML=html;
+}
+
+// ─── ISA ──────────────────────────────────────────────────────────────────
+function buildISA(){
+  const G=[
+    {t:'ARITHMETIC & LOGIC',r:[['LOAD','R, #imm','Z N'],['MOV','R, R','Z N'],['ADD','R, R, R','Z N C V ★'],['SUB','R, R, R','Z N C V ★'],['AND','R, R, R','Z N ◆'],['OR','R, R, R','Z N ◆'],['XOR','R, R, R','Z N ◆'],['NOT','R, R','Z N ◆'],['LSL','R, R, #','Z N ◆'],['LSR','R, R, #','Z N ◆'],['MUL','R, R, R','Z N ★'],['DIV','R, R, R','Z N ★'],['MOD','R, R, R','Z N ★'],['CMP','R, R','Z N C V ★'],['HALT','','—']]},
+    {t:'CONTROL FLOW',r:[['JMP','addr','—'],['JZ','addr','—'],['JNZ','addr','—'],['JN','addr','—'],['JNN','addr','—'],['JC','addr','—'],['JE','addr','—'],['JNE','addr','—'],['JG','addr','—'],['JL','addr','—'],['JGE','addr','—'],['JLE','addr','—']]},
+    {t:'IMMEDIATE ARITHMETIC',r:[['ADDI','R, R, #','Z N C V ★'],['SUBI','R, R, #','Z N C V ★'],['MULI','R, R, #','Z N ★'],['ANDI','R, R, #','Z N ◆'],['ORI','R, R, #','Z N ◆'],['CMPI','R, #','Z N C V ★']]},
+    {t:'MEMORY',r:[['STORE','R, addr','—'],['LOAD_MEM','R, addr','Z N'],['STOREI','R, R','—'],['LOADI','R, R','Z N'],['STOREX','R, R, #','—'],['LOADX','R, R, #','Z N']]},
+    {t:'STACK & SUBROUTINES',r:[['PUSH','R','—'],['POP','R','Z N'],['CALL','addr','—'],['RET','','—']]},
+    {t:'SYSTEM',r:[['SYSCALL','N','—'],['NOP','','—'],['CLRS','','S←0 only']]},
+  ];
+  const SC=[['1','PRINT_INT','print R0 as signed integer'],['2','PRINT_CHAR','print R0 as Unicode char'],['3','PRINT_STR','print null-terminated string at mem[R0]'],['4','READ_INT','read from input_queue into R0'],['5','EXIT','halt; exit_code=R0'],['6','PRINT_NL','print newline'],['7','DUMP_REGS','print full CPU state to console']];
+  let h='';
+  for(const g of G){h+=`<div class="is"><div class="is-t">${g.t}</div>`;for(const[o,f,fl]of g.r)h+=`<div class="ir"><span class="ir-o">${o}</span><span class="ir-f">${f||'(none)'}</span><span class="ir-fl">${fl.replace(/[★◆]/g,'').trim()}</span></div>`;h+='</div>';}
+  h+=`<div class="is"><div class="is-t">SYSCALL NUMBERS</div>`;
+  for(const[n,nm,d]of SC)h+=`<div class="ir"><span class="ir-o">${n}</span><span class="ir-f" style="flex:1">${nm}</span></div><div style="font-size:8px;color:var(--text2);padding:0 4px 2px 60px">${d}</div>`;
+  h+=`</div><div style="margin-top:8px;font-size:8px;color:var(--text2);padding:4px">★ SubstrateALU digit-chain in substrate mode ◆ cell-read→op→digit-write (LAW_004)<br>Both modes produce identical computed values.</div>`;
+  document.getElementById('i-tab').innerHTML=h;
+}
+
+// ─── DOCUMENTATION ────────────────────────────────────────────────────────
+function openDocs(){document.getElementById('docs-modal').classList.add('open');}
+function closeDocs(){document.getElementById('docs-modal').classList.remove('open');}
+function buildDocs(){
+  const gi=GolayEngine.info();
+  const dispRows=Array.from({length:12},(_,d)=>{const info=GolayEngine.dinfo(d);return`<tr><td>${d}</td><td>${info.disp}</td><td class="${d<=4?'phen':'shad'}">${info.regime}${d===4?' ← elastic limit':''}</td><td>${info.smc?'Yes':'<span style="color:var(--red)">No</span>'}</td></tr>`;}).join('');
+  document.getElementById('docs-inner').innerHTML=`
+<div class="doc-hero">
+  <div class="doc-title">NoiseCore VM</div>
+  <div class="doc-subtitle">User Reference &amp; Technical Guide · v1.3.0 TRIAD EDITION</div>
+  <div class="doc-meta">E R A Craig / UBP Research · May 2026 ·
+    <a href="https://github.com/DigitalEuan/noisecore" target="_blank">github.com/DigitalEuan/noisecore</a>
+  </div>
+</div>
+
+<div class="doc-toc">
+  <div class="doc-toc-title">Contents</div>
+  <div class="doc-toc-grid">
+    <a href="#s1">1. What is NoiseCore VM?</a>
+    <a href="#s2">2. Why a Golay substrate?</a>
+    <a href="#s3">3. The Golay [24,12,8] Code</a>
+    <a href="#s4">4. Base-12 registers & digit cells</a>
+    <a href="#s5">5. The elastic limit & Shadow Regime</a>
+    <a href="#s6">6. The S flag & CLRS</a>
+    <a href="#s7">7. SubstrateALU — native arithmetic</a>
+    <a href="#s8">8. carry_work — binding events</a>
+    <a href="#s9">9. NRCI & magnitude_sha</a>
+    <a href="#s10">10. Writing programs (.nca)</a>
+    <a href="#s11">11. Two execution modes</a>
+    <a href="#s12">12. Step-by-step debugging</a>
+    <a href="#s13">13. Known limitations</a>
+    <a href="#s14">14. API summary</a>
+    <a href="#s15">15. Triad: Leech Λ₂₄</a>
+    <a href="#s16">16. Triad: Monster &amp; sporadics</a>
+    <a href="#s17">17. Triad: Barnes-Wall 256</a>
+    <a href="#s18">18. Particle physics (13D Sink)</a>
+    <a href="#s19">19. New SYSCALLs &amp; commands</a>
+  </div>
+</div>
+
+<hr class="doc-rule">
+
+<h2 class="doc-h1" id="s1">1. What is NoiseCore VM?</h2>
+<p class="doc-p">NoiseCore VM is a <b>fully functional register machine</b> — a real CPU emulator that can run any integer algorithm. It has 8 registers, 256-cell memory, a 46-instruction ISA, a two-pass assembler, a disassembler, and a trace recorder. In plain mode it runs at over 600,000 instructions per second.</p>
+<p class="doc-p">What makes it different is its second mode: <b>Substrate Mode</b>. When enabled, every register is physically backed by the <b>Extended Binary Golay Code [24,12,8]</b> — a perfect error-correcting code with deep connections to the geometry of sphere packing and the Monster Group. Every value stored in a register leaves a measurable geometric fingerprint. All arithmetic is performed natively in base-12 — never as plain integer operations on full values.</p>
+<p class="doc-p">Both modes always produce <b>identical computational results</b>. Every test passes in both modes. The substrate does not change what the computer computes; it changes how computation is physically grounded.</p>
+
+<div class="doc-note">
+  <b>For users who just want to run programs:</b> select an example, click ▶ RUN, and use the terminal. The ISA tab on the right lists all 46 instructions. Substrate mode is optional — enable it when you want to observe the geometric layer beneath the arithmetic.
+</div>
+
+<h2 class="doc-h1" id="s2">2. Why a Golay substrate?</h2>
+<p class="doc-p">The Universal Binary Principle (UBP) framework proposes that computation in nature is grounded in discrete geometric structures — specifically the Golay code and Leech Lattice geometry. NoiseCore VM is a research instrument for testing this claim. It asks: what does it look like if every register value is encoded as a point in Golay space, and all arithmetic respects that encoding?</p>
+<p class="doc-p">The answer is that ordinary computation still works perfectly — and additionally, geometric quantities emerge that have no counterpart in plain integer arithmetic: the <b>displacement</b> of each stored digit from the Golay manifold, the <b>Shadow Regime</b> entry when values cross a Voronoi boundary, the <b>carry_work</b> that accumulates during value assembly, and the <b>NRCI</b> coherence measure.</p>
+<p class="doc-p">These are not simulations or approximations. They are direct measurements of the geometric state of the substrate as real programs execute.</p>
+
+<h2 class="doc-h1" id="s3">3. The Golay [24,12,8] Code</h2>
+<p class="doc-p">The extended binary Golay code is a perfect linear code: 24-bit codewords, 12 information bits, minimum Hamming distance 8, packing radius t=3. "Perfect" means the Hamming balls of radius 3 around each codeword exactly tile the space of all 24-bit strings with no overlap and no gap.</p>
+<div class="doc-kv"><span class="doc-k">Generator</span><span class="doc-v">G = [I₁₂ | A] where A is the standard 12×12 symmetric matrix</span></div>
+<div class="doc-kv"><span class="doc-k">PERFECT_V1</span><span class="doc-v">${gi.vector} — the substrate vector used in all registers</span></div>
+<div class="doc-kv"><span class="doc-k">Hamming weight</span><span class="doc-v">hw = ${gi.hw} (9 bits set in the 24-bit codeword)</span></div>
+<div class="doc-kv"><span class="doc-k">Baseline syndrome</span><span class="doc-v">sw = ${gi.baseSW} (syndrome weight of PERFECT_V1 through the parity-check matrix)</span></div>
+<div class="doc-kv"><span class="doc-k">NRCI</span><span class="doc-v">10/(10+|${gi.hw}−12|) = ${gi.nrci.toFixed(6)} (constant for PERFECT_V1)</span></div>
+<p class="doc-p">When a digit d is stored in a register cell, the Golay engine computes the syndrome weight of PERFECT_V1 after d positional perturbations. The difference between this and the baseline syndrome weight (${gi.baseSW}) is the <b>displacement</b> — a geometric quantity measuring how far that digit has moved the substrate point.</p>
+<p class="doc-p">The syndrome weight is computed from the standard parity-check equation H·c = 0 in GF(2). For PERFECT_V1 this produces a well-defined displacement curve that is linear for digits 0–4 and non-linear beyond.</p>
+
+<h2 class="doc-h1" id="s4">4. Base-12 registers &amp; digit cells</h2>
+<p class="doc-p">In Substrate Mode, each register stores its value as an array of base-12 digits — the <b>digit cells</b>. You can see these as the small coloured squares inside each register card in the IDE. <b>Green cells</b> hold digits 0–4 (Phenomenal regime). <b>Red cells</b> hold digits 5–11 (Shadow Regime).</p>
+<p class="doc-p">The value 1836 decomposes as:</p>
+<code class="doc-code">1836 = 1×12³ + 0×12² + 9×12¹ + 0×12⁰
+     = 1728 + 0 + 108 + 0
+
+digits: [0, 9, 0, 1]  (little-endian base-12)
+         cell[0] cell[1] cell[2] cell[3]
+
+cell[1] holds digit 9 — which is > 4 → Shadow Regime
+The S flag will latch to 1 the moment this value is written.</code>
+<p class="doc-p">Each cell holds an independent geometric measurement. A single large digit in any cell is enough to cross the elastic limit. This makes the Shadow flag sensitive to the internal structure of values, not just their magnitude.</p>
+<p class="doc-p">The sign of a value is stored separately in the CPU's sign array — the substrate always holds the unsigned magnitude. This is because Golay geometry measures displacement, which is non-negative.</p>
+
+<h2 class="doc-h1" id="s5">5. The elastic limit &amp; Shadow Regime</h2>
+<p class="doc-p">The Golay packing radius is t=3. This sets a natural boundary in the displacement curve: digits 0 through 4 produce linear, proportional displacements. This is the <b>Phenomenal regime</b> — the elastic regime where the substrate responds proportionally to the stored value.</p>
+<p class="doc-p">At digit 5, the substrate vector crosses the <b>Voronoi boundary</b> of its local packing sphere and snaps to a new geometric anchor. The displacement becomes non-linear. This is the <b>Shadow Regime</b> — named because the excess geometric frustration folds into the 12-bit Noumenal (hidden) space of the Golay code.</p>
+<table class="doc-table">
+  <tr><th>Digit</th><th>Displacement</th><th>Regime</th><th>sm_consistent</th></tr>
+  ${dispRows}
+</table>
+<p class="doc-p"><b>sm_consistent = false does not mean the value is wrong.</b> The logical value is always recoverable via register.read(). It means the substrate has folded into a different geometric anchor. The computation is in the Shadow Regime, but its result is correct.</p>
+
+<h2 class="doc-h1" id="s6">6. The S flag &amp; CLRS</h2>
+<p class="doc-p">The <b>S (Shadow) flag</b> is the fifth flag in the CPU flag register. It <b>latches to 1</b> the moment any register write causes a digit to exceed 4, and stays at 1 until explicitly cleared. It is always 0 in plain mode.</p>
+<p class="doc-p">The <span class="doc-inline">CLRS</span> instruction (opcode 0x52) clears only S, leaving Z, N, C, and V unchanged. This lets you bracket sections of code to test whether specific computations enter the Shadow Regime:</p>
+<code class="doc-code"><span class="c">; Section probe pattern:</span>
+    <span class="k">CLRS</span>               <span class="c">; clear S before the section</span>
+<span class="c">; ─── section under test ───</span>
+    <span class="k">LOAD</span>  R0, #4       <span class="c">; digit 4: PHENOMENAL — S stays 0</span>
+    <span class="k">ADD</span>   R1, R0, R0   <span class="c">; result 8: digit 8 > 4 — S LATCHES</span>
+<span class="c">; ───────────────────────────</span>
+    <span class="k">SYSCALL</span> 7          <span class="c">; DUMP_REGS: observe S=1 in substrate mode</span>
+    <span class="k">CLRS</span>               <span class="c">; reset for next section</span></code>
+<p class="doc-p">After a run, <span class="doc-inline">info['shadow_flag']</span> tells you whether any instruction triggered Shadow entry during the entire program. Per-register shadow state is available via the substrate fingerprint.</p>
+
+<h2 class="doc-h1" id="s7">7. SubstrateALU — native base-12 arithmetic</h2>
+<p class="doc-p">In Substrate Mode, all arithmetic (ADD, SUB, MUL, DIV, MOD, and their immediate variants, plus CMP) is performed <b>digit-by-digit on the base-12 cell arrays</b>. Python/JavaScript integer operators are never applied to full register values. Only single-digit intermediates — bounded to at most 143 — use arithmetic operators.</p>
+<div class="doc-h3">LAW_SUBSTRATE_ALU_001 — Addition &amp; Subtraction</div>
+<p class="doc-p">Each digit position: s = a_digit + b_digit + carry. Maximum intermediate: 11+11+1 = 23. If s ≥ 12, carry=1, store s−12; otherwise carry=0.</p>
+<code class="doc-code"><span class="c">; Example: 1836 + 1839 in base-12:</span>
+<span class="c">; 1836 = [0, 9, 0, 1]   1839 = [3, 9, 0, 1]  (little-endian)</span>
+<span class="c">;</span>
+<span class="c">; pos[0]: 0+3+0 = 3   → store 3, carry=0</span>
+<span class="c">; pos[1]: 9+9+0 = 18  → store 6, carry=1  ← CARRY EVENT</span>
+<span class="c">; pos[2]: 0+0+1 = 1   → store 1, carry=0</span>
+<span class="c">; pos[3]: 1+1+0 = 2   → store 2, carry=0</span>
+<span class="c">;</span>
+<span class="c">; Result: [3,6,1,2] = 3 + 72 + 144 + 2916 = 3135  ← wait</span>
+<span class="c">; Check: 2×12³ + 1×12² + 6×12 + 3 = 3456+144+72+3 = 3675 ✓</span>
+<span class="c">; carry_events = 1  (one digit position carried)</span></code>
+<div class="doc-h3">LAW_SUBSTRATE_ALU_002 — Multiplication</div>
+<p class="doc-p">Base-12 long multiplication. For each digit pair (a_i, b_j): acc + a_i×b_j + carry, maximum 11 + 11×11 + 11 = 143. Results accumulate into the product digit array without ever representing the full product as a single integer.</p>
+<div class="doc-h3">LAW_SUBSTRATE_ALU_003 — Division &amp; Modulo</div>
+<p class="doc-p">Knuth Algorithm D adapted for base 12. The trial-quotient step uses a 2-digit window of the running remainder (≤143) divided by the leading divisor digit. An adjustment loop corrects over-estimation and runs at most 2 iterations per digit position. The remainder is un-normalised by a small integer division.</p>
+<div class="doc-h3">LAW_SUBSTRATE_ALU_004 — Bitwise &amp; Shifts</div>
+<p class="doc-p">AND, OR, XOR, NOT, LSL, and LSR read the unsigned magnitude from digit cells, apply the binary operation (which has no natural base-12 analogue), then write the result back through <span class="doc-inline">write_from_alu()</span>. The critical property is preserved: the result always enters the substrate as a digit array, so the geometric encoding is maintained.</p>
+
+<h2 class="doc-h1" id="s8">8. carry_work — binding events</h2>
+<p class="doc-p">The <b>carry_work</b> counter on each ShadowRegister counts the cumulative number of perturbation steps across all writes to that register. For a standard write (integer → digits), carry_work increments by the sum of absolute digit changes. For an ALU write, it increments by the carry event count returned by the digit-chain operation.</p>
+<p class="doc-p">A separate utility function <span class="doc-inline">base4Carries(a, b)</span> counts base-4 carry events when adding two values — this is <b>LAW_CARRY_WORK_001</b>. Classical binding energy (e.g. nuclear binding energy per nucleon) is the macroscopic analogue of this quantity. Try it in the terminal:</p>
+<code class="doc-code"><span class="n">ncavm&gt;</span> <span class="k">carries 1836 1839</span>    <span class="c">; proton + neutron</span>
+<span class="n">ncavm&gt;</span> <span class="k">digits 1836</span>            <span class="c">; inspect proton's base-12 digit structure</span>
+<span class="n">ncavm&gt;</span> <span class="k">fp</span>                      <span class="c">; full substrate fingerprint after a run</span></code>
+<p class="doc-p">The total_carry_work shown in the substrate strip after a program run is the sum across all 8 registers — a measure of the total geometric binding work performed by the computation.</p>
+
+<h2 class="doc-h1" id="s9">9. NRCI &amp; magnitude_sha</h2>
+<div class="doc-h3">NRCI — Noise-Resonance-Coherence Index</div>
+<p class="doc-p">NRCI = 10 / (10 + |hw − 12|), where hw is the Hamming weight of the substrate vector. For PERFECT_V1 (hw=9), NRCI is always <b>${gi.nrci.toFixed(6)}</b>. This is a property of the substrate geometry, not of the stored values. It would only vary if different substrate types were mixed across registers. It serves as a structural constant of the UBP framework.</p>
+<div class="doc-h3">magnitude_sha — computation-dependent fingerprint</div>
+<p class="doc-p">SHA-256 (first 16 hex characters) of the magnitude pattern across all 8 registers and the first 32 memory cells. This <b>changes with every register write</b>, giving a deterministic geometric signature of the CPU's current numeric state. Two runs of the same program will produce the same magnitude_sha at each point — if they don't, a non-determinism bug has been introduced.</p>
+
+<h2 class="doc-h1" id="s10">10. Writing programs (.nca)</h2>
+<p class="doc-p">NoiseCore Assembly source files use the <span class="doc-inline">.nca</span> extension. Semicolons begin comments. Whitespace is insignificant beyond token separation. The assembler performs two passes to resolve forward references.</p>
+<div class="doc-h3">Directives</div>
+<code class="doc-code"><span class="k">.equ</span> <span class="n">N</span> 10        <span class="c">; define constant N=10 (decimal, hex 0xFF, binary 0b101, char 'A')</span>
+<span class="k">.data</span> <span class="n">arr</span> 1 2 3  <span class="c">; allocate memory cells; arr resolves to base address</span>
+<span class="k">.org</span> 20            <span class="c">; set .data write pointer to address 20</span></code>
+<div class="doc-h3">Operand forms</div>
+<code class="doc-code">R0, R7             <span class="c">; register (R0–R7, R7=SP by convention)</span>
+#5, #-42           <span class="c">; signed decimal immediate</span>
+#0xFF, #0b1010     <span class="c">; hex / binary immediate</span>
+'A', ' ', '0'      <span class="c">; ASCII/Unicode char literal (resolves to code point)</span>
+loop, done         <span class="c">; label (resolved at assemble time to instruction index)</span>
+N, SIZE            <span class="c">; .equ constant (resolved at assemble time)</span></code>
+<div class="doc-h3">Minimal program</div>
+<code class="doc-code">    <span class="k">LOAD</span> R0, #42
+    <span class="k">SYSCALL</span> 1          <span class="c">; PRINT_INT: prints R0 as signed integer</span>
+    <span class="k">SYSCALL</span> 6          <span class="c">; PRINT_NL</span>
+    <span class="k">HALT</span></code>
+<div class="doc-h3">Loop pattern</div>
+<code class="doc-code">    <span class="k">LOAD</span> R0, #10       <span class="c">; counter</span>
+<span class="n">loop:</span>
+    <span class="k">CMPI</span> R0, 0
+    <span class="k">JLE</span>  done
+    <span class="c">; ... loop body ...</span>
+    <span class="k">SUBI</span> R0, R0, #1
+    <span class="k">JMP</span>  loop
+<span class="n">done:</span>
+    <span class="k">HALT</span></code>
+<div class="doc-h3">Subroutine with PUSH/POP</div>
+<code class="doc-code">    <span class="k">LOAD</span> R0, #10
+    <span class="k">CALL</span> myfunc
+    <span class="k">SYSCALL</span> 1
+    <span class="k">HALT</span>
+
+<span class="n">myfunc:</span>
+    <span class="k">PUSH</span> R1            <span class="c">; save caller-save registers</span>
+    <span class="k">MULI</span> R0, R0, #3    <span class="c">; R0 = R0 * 3  (SubstrateALU in substrate mode)</span>
+    <span class="k">POP</span>  R1
+    <span class="k">RET</span></code>
+<div class="doc-h3">Register conventions</div>
+<table class="doc-table">
+  <tr><th>Register</th><th>Convention</th><th>Notes</th></tr>
+  <tr><td class="am">R0</td><td>First argument / return value</td><td>SYSCALL 1 reads R0. SYSCALL 4 writes R0.</td></tr>
+  <tr><td>R1–R6</td><td>General purpose</td><td>Caller-saved. No hardware enforcement.</td></tr>
+  <tr><td class="am">R7</td><td>Stack pointer (SP)</td><td>Initialised to 255. PUSH decrements, POP increments.</td></tr>
+</table>
+
+<h2 class="doc-h1" id="s11">11. Two execution modes</h2>
+<table class="doc-table">
+  <tr><th>Mode</th><th>Speed</th><th>Registers</th><th>Arithmetic</th><th>Use when</th></tr>
+  <tr><td class="am">Plain</td><td>600k–1M+ ips</td><td>Lightweight integer container</td><td>Direct JS arithmetic</td><td>Development, testing, benchmarks</td></tr>
+  <tr><td class="shad">Substrate</td><td>10–80× slower</td><td>ShadowRegister (Golay-backed)</td><td>SubstrateALU digit-chain</td><td>S flag, carry_work, NRCI, shadow analysis</td></tr>
+</table>
+<p class="doc-p">Both modes produce identical values for every instruction on every program. The 46-opcode ISA test suite passes in both modes. The difference is entirely in the geometric layer: substrate mode measures and exposes it; plain mode ignores it.</p>
+<div class="doc-warn">
+  Substrate mode is 10–80× slower than plain mode due to digit-by-digit arithmetic. For throughput-sensitive work (prime sieves, sorting large arrays) use plain mode. Enable substrate mode when the geometric measurements are what you are studying.
+</div>
+
+<h2 class="doc-h1" id="s12">12. Step-by-step debugging</h2>
+<p class="doc-p">Click <b>⊳ STEP</b> or type <span class="doc-inline">step</span> in the terminal to assemble the current program and enter step mode. Each click of STEP (or typing <span class="doc-inline">n</span>) executes exactly one instruction. The current instruction is highlighted in the editor, the register display updates live, and the terminal shows the flag state after each step.</p>
+<p class="doc-p">In substrate mode, step mode is especially useful for watching the digit cells update — you can see exactly which cells enter the Shadow Regime as values change instruction by instruction.</p>
+<p class="doc-p">Additional debug tools: <span class="doc-inline">SYSCALL 7</span> (DUMP_REGS) prints the full CPU state to the console at any point in the program. <span class="doc-inline">SYSCALL 7</span> is safe to leave in programs as a breakpoint — it produces no side effects beyond output.</p>
+
+<h2 class="doc-h1" id="s13">13. Known limitations</h2>
+<div class="doc-kv"><span class="doc-k">No floating-point</span><span class="doc-v">The ISA is integer-only. Use fixed-point (milliradians, per-mil) for fractions.</span></div>
+<div class="doc-kv"><span class="doc-k">No interrupts</span><span class="doc-v">Divide-by-zero, stack overflow, and memory bounds raise runtime errors.</span></div>
+<div class="doc-kv"><span class="doc-k">Bitwise on magnitude</span><span class="doc-v">AND, OR, XOR, NOT, LSL, LSR operate on the unsigned magnitude only.</span></div>
+<div class="doc-kv"><span class="doc-k">8 registers, 256 cells</span><span class="doc-v">Defaults match the Python reference implementation.</span></div>
+<div class="doc-kv"><span class="doc-k">REPL branch limit</span><span class="doc-v">Branch instructions require full program context; not supported in step-single-line mode.</span></div>
+<div class="doc-kv"><span class="doc-k">Shadow depth</span><span class="doc-v">S flag and shadow_active detect Shadow Regime entry; they do not quantify depth. Inspect per-cell displacement for deeper analysis.</span></div>
+<div class="doc-kv"><span class="doc-k">Browser precision</span><span class="doc-v">word_bits=16 means values wrap at ±32767. The Python reference supports 8/16/32/64-bit words.</span></div>
+
+<h2 class="doc-h1" id="s14">14. API summary (Python reference)</h2>
+<code class="doc-code"><span class="k">from</span> noisecore_vm <span class="k">import</span> run_program, CPU, assemble, SubstrateALU
+
+<span class="c"># One-shot execution</span>
+cpu, info = run_program(source, substrate_mode=True, trace=True)
+print(info['output'])           <span class="c"># program output</span>
+print(info['shadow_flag'])      <span class="c"># S flag at end</span>
+print(info['total_carry_work']) <span class="c"># cumulative carry events</span>
+print(info['trace_hash'])       <span class="c"># SHA-256 of instruction trace</span>
+
+<span class="c"># Substrate fingerprint</span>
+fp = cpu.substrate_fingerprint()
+print(fp['nrci_mean'])          <span class="c"># ${gi.nrci.toFixed(6)}</span>
+print(fp['magnitude_sha'])      <span class="c"># 16-char SHA of register/memory magnitudes</span>
+print(fp['shadow_registers'])   <span class="c"># list of register indices in Shadow Regime</span>
+
+<span class="c"># Direct SubstrateALU access</span>
+da = SubstrateALU._to_digits(1836)   <span class="c"># [0, 9, 0, 1]</span>
+db = SubstrateALU._to_digits(1839)   <span class="c"># [3, 9, 0, 1]</span>
+digits, carry_out, ce = SubstrateALU._add_digits(da, db)
+
+<span class="c"># count_base4_carries utility (LAW_CARRY_WORK_001)</span>
+<span class="k">from</span> noisecore_vm <span class="k">import</span> count_base4_carries
+work = count_base4_carries(1836, 1839)</code>
+<p class="doc-p">Install from source: <span class="doc-inline">pip install -e .</span> in the repository root. Run tests: <span class="doc-inline">pytest</span> — 208 tests, all green in both plain and substrate modes.</p>
+
+<hr class="doc-rule">
+
+<h2 class="doc-h1" id="s15">15. Triad: Leech Lattice Λ₂₄</h2>
+<p class="doc-p">The <b>Leech Lattice Λ₂₄</b> is the unique 24-dimensional even unimodular lattice with no vectors of squared norm 2. It achieves the densest possible sphere packing in 24-D, with kissing number <b>196,560</b>. NoiseCore VM constructs it directly from the existing Golay substrate via <i>Construction A</i>: every weight-8 Golay codeword (an &quot;octad&quot;) lifts to 128 lattice points by replacing each active bit with ±2, with the constraint that the number of negative signs is even.</p>
+<div class="doc-kv"><span class="doc-k">octad lift</span><span class="doc-v">759 octads × 128 sign patterns = 97,152 minimal-shell points</span></div>
+<div class="doc-kv"><span class="doc-k">squared norm</span><span class="doc-v">always 32 (scaled ×8) = 4 in physical space</span></div>
+<div class="doc-kv"><span class="doc-k">symmetry tax</span><span class="doc-v">T = hw·Y + |p|²/8 where Y = 1/(π + 2/π) ≈ 0.2647 (LAW_SYMMETRY_001)</span></div>
+<div class="doc-kv"><span class="doc-k">ontological health</span><span class="doc-v">tetradic MOG partition: Reality · Info · Activation · Potential (6 coords each, LAW_SUBSTRATE_005)</span></div>
+<p class="doc-p">Operations exposed: <span class="doc-inline">SYSCALL 8</span> (lift octad), <span class="doc-inline">SYSCALL 9</span> (compute tax), <span class="doc-inline">SYSCALL 10</span> (health profile), <span class="doc-inline">SYSCALL 15</span> (probe — nearest octad to integer). Terminal commands: <span class="doc-inline">octad &lt;i&gt;</span>, <span class="doc-inline">leech</span>, <span class="doc-inline">health &lt;i&gt;</span>, <span class="doc-inline">probe &lt;n&gt;</span>, <span class="doc-inline">rank &lt;i&gt; [c]</span>.</p>
+
+<h2 class="doc-h1" id="s16">16. Triad: Monster Group &amp; the 26 Sporadics</h2>
+<p class="doc-p">The <b>Monster M</b> is the largest of the 26 sporadic finite simple groups, with order ≈ 8.08×10⁵³. Its smallest non-trivial complex representation has dimension 196,883; the famous <b>Moonshine</b> identity is 196,884 = 196,883 + 1, the first coefficient of the modular j-function. The triad activates progressively:</p>
+<div class="doc-kv"><span class="doc-k">Golay tier</span><span class="doc-v">stable_count ≥ 12 — always armed (the substrate is always loaded)</span></div>
+<div class="doc-kv"><span class="doc-k">Leech tier</span><span class="doc-v">stable_count ≥ 24 — enough register state + substrate mode</span></div>
+<div class="doc-kv"><span class="doc-k">Monster tier</span><span class="doc-v">sporadic_count ≥ 26 — all 26 sporadic groups loaded (always true here)</span></div>
+<p class="doc-p">The 26 sporadics split into 20 <b>Happy Family</b> members (subquotients of M, including all five Mathieu groups M11/12/22/23/24, all four Conway groups, three Fischers, McLaughlin, Higman-Sims, Held, Suzuki, Harada-Norton, Thompson, Hall-Janko J2, the Baby Monster B, and M itself) and 6 <b>pariahs</b> (J1, J3, J4, Ru, Ly, ON) that exist outside the Monster. Two of these are particularly relevant here: <b>M24</b> is the automorphism group of the Golay code, and <b>Co1</b> is the automorphism group of Λ₂₄ modulo ±I — so the triad chain Golay→Leech→Monster is reflected directly in M24 → Co1 → M.</p>
+<p class="doc-p">Operations: <span class="doc-inline">SYSCALL 13</span> (group info), <span class="doc-inline">SYSCALL 12</span> (triad activation level 0–3). Terminal: <span class="doc-inline">monster</span>, <span class="doc-inline">monster &lt;i&gt;</span>, <span class="doc-inline">triad</span>.</p>
+
+<h2 class="doc-h1" id="s17">17. Triad: Barnes-Wall 256</h2>
+<p class="doc-p">The <b>Barnes-Wall lattice BW₂₅₆</b> is built recursively from the Golay code via Reed-Muller-style construction: <span class="doc-inline">|u | u+v|</span> where <i>u</i> is a recursive base layer and <i>v</i> is the &quot;program&quot; — a 24-bit codeword derived from the <b>Golay syndrome</b> of the seed. The syndrome captures the geometric frustration of any deviation from the codeword space; injecting it as the <i>v</i> component creates measurable interference at every level of the recursion.</p>
+<div class="doc-kv"><span class="doc-k">base case</span><span class="doc-v">32 = 24-bit Golay codeword + 8-bit zero padding, all values ×2 (mod 4)</span></div>
+<div class="doc-kv"><span class="doc-k">v component</span><span class="doc-v">v_bits = encode(syndrome(seed)) — the Program</span></div>
+<div class="doc-kv"><span class="doc-k">decoder</span><span class="doc-v">successive cancellation: clean(v_noisy) = clean((u+(u+v)) mod 4) — the Lens</span></div>
+<div class="doc-kv"><span class="doc-k">macro-NRCI</span><span class="doc-v">10 / (10 + hw·Y + |p|²/64); anchor 0.323214 separates HIGH/LOW clarity</span></div>
+<p class="doc-p">The audit (<span class="doc-inline">SYSCALL 11</span>) takes the SHA-256 of the entire CPU state, lifts it to the chosen dimension (32/64/128/256/512), snaps to the lattice, and reports macro-NRCI relative to the Golay micro-NRCI. <b>Relative coherence</b> is the ratio macro/micro — a measurement of how well the program&apos;s state survives geometric refraction up into 256 dimensions. Values &gt; 0.323214 indicate HIGH clarity. Different seeds reliably produce different macro-NRCI — confirming that the Program (interference component) is active.</p>
+<p class="doc-p">Terminal: <span class="doc-inline">bw [dim]</span> for arbitrary-dimension audit; the panel light fills amber when the current state achieves HIGH clarity.</p>
+
+<h2 class="doc-h1" id="s18">18. Particle physics — the 13D Sink Protocol</h2>
+<p class="doc-p">The UBP Source Code Particle Physics module identifies a single dimensionless &quot;leakage&quot; constant <b>L = (π·φ·e mod 1) / 13</b> ∈ ≈12.6×10⁻³ ÷ 13 ≈ 0.062891. From this single number plus a stereoscopic factor σ = 29/24, the framework derives a remarkably accurate atlas of particle ratios:</p>
+<div class="doc-kv"><span class="doc-k">mₚ / mₑ</span><span class="doc-v">1836 + 2·L·σ = 1836.152 — target 1836.15267 — error <b>0.000037%</b></span></div>
+<div class="doc-kv"><span class="doc-k">mμ / mₑ</span><span class="doc-v">206 + 12·L = 206.755 — target 206.76828 — error 0.0066%</span></div>
+<div class="doc-kv"><span class="doc-k">α⁻¹</span><span class="doc-v">137 + L = 137.063 — target 137.035999 — error 0.020%</span></div>
+<p class="doc-p">These are <i>not</i> fitted; they are derived from the same constants the Golay/Leech engines use. Access via <span class="doc-inline">SYSCALL 14</span> (R0=which) or terminal <span class="doc-inline">particles</span>.</p>
+
+<h2 class="doc-h1" id="s19">19. New SYSCALLs &amp; terminal commands</h2>
+<p class="doc-p">Triad-tier SYSCALLs (numbers 8–15) are added on top of the original 7 — they coexist; original programs remain identical:</p>
+<div class="doc-kv"><span class="doc-k">SYSCALL 8</span><span class="doc-v">LEECH_OCTAD — R0 = octad index; prints lift summary; R0 ← tax×10⁶</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 9</span><span class="doc-v">LEECH_TAX — R0 = octad index; R0 ← symmetry tax ×10⁶ (silent)</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 10</span><span class="doc-v">LEECH_HEALTH — R0 = octad index; prints tetradic MOG profile</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 11</span><span class="doc-v">BW_AUDIT — 256D Barnes-Wall audit of full CPU state; R0 ← macro-NRCI ×10⁶</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 12</span><span class="doc-v">TRIAD_STATUS — prints activation; R0 ← level (0–3)</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 13</span><span class="doc-v">MONSTER_INFO — R0 = sporadic index (0–25); R0 ← group order (capped int32)</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 14</span><span class="doc-v">PARTICLE_PRED — R0 = which (0=α⁻¹, 1=p/e⁻, 2=μ/e⁻); R0 ← prediction ×10⁶</span></div>
+<div class="doc-kv"><span class="doc-k">SYSCALL 15</span><span class="doc-v">LATTICE_PROBE — R0 = integer; folds to 24-bit signature; R0 ← nearest octad index</span></div>
+<p class="doc-p">Terminal: <span class="doc-inline">triad</span>, <span class="doc-inline">leech</span>, <span class="doc-inline">octad &lt;i&gt;</span>, <span class="doc-inline">health &lt;i&gt;</span>, <span class="doc-inline">monster [i]</span>, <span class="doc-inline">bw [dim]</span>, <span class="doc-inline">particles</span>, <span class="doc-inline">probe &lt;n&gt;</span>, <span class="doc-inline">rank &lt;i&gt; [c]</span>.</p>
+<p class="doc-p">Try the new examples in the dropdown (11–19): <i>leech_octad</i>, <i>leech_health</i>, <i>triad_activate</i>, <i>bw_audit</i>, <i>monster_walk</i>, <i>particle_physics</i>, <i>lattice_probe</i>, <i>higher_math</i>, <i>triad_demo</i>. The <b>triad_demo</b> example walks the full Golay→M24→Leech→Co1→M→BW256 chain in a single program.</p>
+
+<hr class="doc-rule">
+<p class="doc-p" style="color:var(--text2);font-size:12px;text-align:center">NoiseCore VM v1.3.0 TRIAD EDITION · E R A Craig / UBP Research · May 2026<br>
+<a href="https://github.com/DigitalEuan/noisecore" style="color:var(--cyan)" target="_blank">github.com/DigitalEuan/noisecore</a> ·
+<a href="https://github.com/DigitalEuan/UBP_Repo" style="color:var(--cyan)" target="_blank">github.com/DigitalEuan/UBP_Repo</a>
+</p>
+`;
+}
+
+// ─── TABS ──────────────────────────────────────────────────────────────────
+function showRTab(t){
+  rTab=t;
+  document.querySelectorAll('.rtab').forEach((el,i)=>el.classList.toggle('active',['mem','isa','trace'][i]===t));
+  document.getElementById('m-tab').style.display=t==='mem'?'':'none';
+  document.getElementById('i-tab').style.display=t==='isa'?'block':'none';
+  document.getElementById('tr-tab').style.display=t==='trace'?'block':'none';
+  if(t==='mem'&&cpu)rendMem(cpu);
+}
+
+// ─── EXAMPLE LOADER ───────────────────────────────────────────────────────
+function loadEx(k){
+  if(!k||!EX[k])return;
+  document.getElementById('editor').value=EX[k];
+  document.getElementById('ex-sel').value='';
+  clearErr();exitHL();stepMode=false;
+}
+
+// ─── RESIZER ──────────────────────────────────────────────────────────────
+function mkRzr(id,lId,rId){
+  const el=document.getElementById(id);let sx,sl,sr;
+  el.addEventListener('mousedown',e=>{sx=e.clientX;sl=document.getElementById(lId).offsetWidth;sr=document.getElementById(rId).offsetWidth;el.classList.add('drag');document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);e.preventDefault();});
+  function mv(e){const dx=e.clientX-sx;document.getElementById(lId).style.width=Math.max(190,sl+dx)+'px';document.getElementById(rId).style.width=Math.max(170,sr-dx)+'px';}
+  function up(){el.classList.remove('drag');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+function buildRegs(){
+  const g=document.getElementById('rg');g.innerHTML='';
+  for(let i=0;i<8;i++){
+    const c=document.createElement('div');c.className='rc';c.id='rc'+i;
+    c.innerHTML=`<div class="rn">R${i}${i===7?' <span style="font-size:6.5px;color:var(--text2)">SP</span>':''}</div><div class="rv" id="rv${i}">0</div><div class="rcs" id="rcs${i}"></div><div class="rst" id="rst${i}">SHADOW</div>`;
+    g.appendChild(c);
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildRegs();buildISA();buildDocs();showRTab('mem');
+  document.getElementById('editor').value=`; NoiseCore VM v1.3.0 TRIAD EDITION — Interactive Browser Implementation
+; ─────────────────────────────────────────────────────
+; Select an example above, or write your program here.
+; Ctrl+Enter = RUN  |  STEP button = single instruction
+; Type 'help' in the terminal for all commands.
+; Click DOCS for full documentation.
+;
+; This default program demonstrates the Shadow Regime:
+; 1836 (proton mass in electron mass units) in base-12
+; is [0, 9, 0, 1] — cell[1] holds digit 9 > 4 → SHADOW.
+
+    LOAD R0, #1836       ; proton  — digit 9 in cell[1] → SHADOW
+    LOAD R1, #1839       ; neutron — digit 9 in cell[1] → SHADOW
+    ADD  R2, R0, R1      ; deuterium assembly
+    MOV  R0, R2
+    SYSCALL 1            ; prints 3675
+    SYSCALL 6
+    HALT`;
+
+  cpu=new CPU({substrate_mode:false});updUI(cpu,null);
+  mkRzr('rzr-l','p-ed','p-ctr');mkRzr('rzr-r','p-ctr','p-rt');
+
+  document.getElementById('editor').addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();doRun();}
+    if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart;t.value=t.value.slice(0,s)+'    '+t.value.slice(t.selectionEnd);t.selectionStart=t.selectionEnd=s+4;}
+  });
+
+  // terminal banner
+  const gi=GolayEngine.info();
+  const ls=LeechEngine.stats();
+  tL('');
+  tL('  NoiseCore VM v1.3.0 — TRIAD EDITION (Browser)','t-bn');
+  tL('  UBP Research / E R A Craig — github.com/DigitalEuan/noisecore','t-bn');
+  tL('');
+  tL('  Golay [24,12,8] substrate engine loaded.','t-sb');
+  tL('  PERFECT_V1: '+gi.vector+'  hw='+gi.hw+'  NRCI='+gi.nrci.toFixed(6),'t-sb');
+  tL('  Displacement curve: ['+gi.disp.join(',')+']','t-sb');
+  tL('  Elastic limit at digit ≤ 4 · Shadow Regime at digit ≥ 5','t-sb');
+  tL('','t-in');
+  tL('  Triad extensions ARMED:','t-sb');
+  tL('    • Leech Λ₂₄ engine — 759 octad seeds, kissing 196,560, |p|²=32 lift','t-in');
+  tL('    • Monster M — 26 sporadic groups, min representation 196,883','t-in');
+  tL('    • Barnes-Wall 256 — recursive |u|u+v| with snap decoder','t-in');
+  tL('    • 13D Sink particle physics — π·φ·e mod 1, σ=29/24','t-in');
+  tL('','t-in');
+  tL('  ▶ RUN  ·  ⊳ STEP  ·  enable SUBSTRATE for Golay geometry','t-in');
+  tL('  Type "help" for commands  · try: triad / leech / monster / bw / particles','t-in');
+  tL('');
+
+  updGV(null);
+  updTriad(null);
+});
+
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
