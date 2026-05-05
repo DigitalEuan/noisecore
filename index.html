@@ -998,46 +998,56 @@ const Assembler = (() => {
 
   // Tokenize a line into tokens (strips comments)
   function tokenizeLine(line) {
-    line=line.replace(/;.*$/,'').trim();
-    if(!line) return[];
-    // Split on whitespace and commas, preserving char literals
-    const tokens=[];
-    let i=0;
-    while(i<line.length){
-      if(line[i]===' '||line[i]==='\t'||line[i]===','){i++;continue;}
-      if(line[i]==="'"){
-        // char literal
-        let j=i+1;
-        while(j<line.length&&line[j]!=="'") j++;
-        tokens.push(line.slice(i,j+1));
-        i=j+1;
-      } else {
-        let j=i;
-        while(j<line.length&&line[j]!==' '&&line[j]!=='\t'&&line[j]!==',') j++;
-        tokens.push(line.slice(i,j));
-        i=j;
-      }
+  line = line.replace(/;.*$/, '').trim();
+  if (!line) return [];
+
+  const tokens = [];
+  let i = 0;
+  while (i < line.length) {
+    const c = line[i];
+
+    if (/\s/.test(c)) { i++; continue; }
+    if (c === ',') { i++; continue; }
+
+    if (c === "'") {
+      // char literal
+      let j = i + 1;
+      while (j < line.length && line[j] !== "'") j++;
+      tokens.push(line.slice(i, j + 1));
+      i = j + 1;
+    } else {
+      let j = i;
+      while (j < line.length && !/\s|,/.test(line[j])) j++;
+      tokens.push(line.slice(i, j));
+      i = j;
     }
-    return tokens;
+  }
+  return tokens;
+}
+
+  function parseImm(tok, constants) {
+  if (!tok) throw new Error('Expected immediate');
+
+  tok = tok.trim();
+  if (tok.startsWith('#')) tok = tok.slice(1).trim();
+
+  if (tok in constants) return constants[tok];
+
+  if (tok.startsWith("'") && tok.endsWith("'")) {
+    const ch = tok.slice(1, -1);
+    if (ch === '\\n') return 10;
+    if (ch === '\\t') return 9;
+    if (ch === '\\0') return 0;
+    return ch.codePointAt(0) || 0;
   }
 
-  function parseImm(tok,constants) {
-    if(tok===undefined) throw new Error('Expected immediate');
-    if(tok.startsWith('#')) tok=tok.slice(1);
-    if(tok.startsWith("'")&&tok.endsWith("'")){ // char literal
-      const ch=tok.slice(1,-1);
-      if(ch.startsWith('\\n')) return 10;
-      if(ch.startsWith('\\t')) return 9;
-      if(ch.startsWith('\\0')) return 0;
-      return ch.codePointAt(0);
-    }
-    if(tok in constants) return constants[tok];
-    if(tok.startsWith('0x')||tok.startsWith('0X')) return parseInt(tok,16);
-    if(tok.startsWith('0b')||tok.startsWith('0B')) return parseInt(tok.slice(2),2);
-    const n=parseInt(tok,10);
-    if(isNaN(n)) throw new Error(`Cannot parse immediate: ${tok}`);
-    return n;
-  }
+  if (tok.startsWith('0x') || tok.startsWith('0X')) return parseInt(tok, 16);
+  if (tok.startsWith('0b') || tok.startsWith('0B')) return parseInt(tok.slice(2), 2);
+
+  const n = parseInt(tok, 10);
+  if (isNaN(n)) throw new Error(`Cannot parse immediate: ${tok}`);
+  return n;
+}
 
   function parseReg(tok) {
     if(!tok) throw new Error('Expected register');
@@ -1164,7 +1174,7 @@ const Assembler = (() => {
           case 'A': instr=[op,resolveAddr(toks[1])]; break;
           case 'I': instr=[op,parseImm(toks[1],constants)]; break;
           case 'R,R': instr=[op,parseReg(toks[1]),parseReg(toks[2])]; break;
-          case 'R,I': instr=[op,parseReg(toks[1]),parseImm(toks[2],constants)]; break;
+          case 'R,I': instr = [op, parseReg(toks[1]), parseImm(toks[2], constants)]; break;
           case 'R,A': instr=[op,parseReg(toks[1]),resolveAddr(toks[2])]; break;
           case 'R,R,R': instr=[op,parseReg(toks[1]),parseReg(toks[2]),parseReg(toks[3])]; break;
           case 'R,R,I': instr=[op,parseReg(toks[1]),parseReg(toks[2]),parseImm(toks[3],constants)]; break;
