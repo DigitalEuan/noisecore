@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NoiseCore VM v1.2.0 — Substrate IDE</title>
+<title>NoiseCore VM v1.2.0 — Interactive IDE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -40,13 +40,14 @@ body{
   display:flex;flex-direction:column;
 }
 
-/* CRT effects */
+/* scanlines */
 body::after{
   content:'';position:fixed;inset:0;
   background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);
   pointer-events:none;z-index:9999;
 }
 
+/* ── header ── */
 #header{
   display:flex;align-items:center;gap:16px;
   padding:0 16px;height:42px;
@@ -90,33 +91,26 @@ body::after{
 #run-btn:hover{background:rgba(240,168,0,0.16);}
 #run-btn.running{border-color:var(--red2);color:var(--red);background:var(--redglow);}
 
+#trace-toggle{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;color:var(--text2);cursor:pointer;
+  border:1px solid var(--border);border-radius:4px;padding:4px 8px;
+  background:var(--bg2);transition:all .15s;
+}
+#trace-toggle:hover{border-color:var(--border2);color:var(--text);}
+#trace-toggle.on{border-color:var(--amber3);color:var(--amber);}
+#trace-toggle input{display:none;}
+
+/* ── main layout ── */
 #main{flex:1;display:flex;overflow:hidden;}
 
-/* Panels */
+/* ── left panel: editor ── */
 #panel-editor{
   width:380px;min-width:260px;flex-shrink:0;
   display:flex;flex-direction:column;
   border-right:1px solid var(--border);
   overflow:hidden;
 }
-#panel-center{
-  flex:1;display:flex;flex-direction:column;overflow:hidden;
-}
-#panel-right{
-  width:320px;min-width:210px;flex-shrink:0;
-  display:flex;flex-direction:column;
-  border-left:1px solid var(--border);
-  overflow:hidden;
-}
-
-/* Resizers */
-.resizer{
-  width:4px;cursor:col-resize;background:transparent;transition:background .2s;
-  z-index:10;
-}
-.resizer:hover{background:var(--amber3);}
-
-/* Editor */
 #editor-toolbar{
   display:flex;align-items:center;gap:6px;
   padding:6px 10px;
@@ -143,8 +137,14 @@ body::after{
   caret-color:var(--amber);
   tab-size:4;
 }
+#nca-editor::selection{background:rgba(240,168,0,0.2);}
 
-/* Registers */
+/* ── center: substrate display + console ── */
+#panel-center{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* registers + flags */
 #regs-panel{
   padding:10px 14px 8px;
   border-bottom:1px solid var(--border);
@@ -156,618 +156,2455 @@ body::after{
   color:var(--text2);margin-bottom:6px;font-family:var(--sans);
 }
 #reg-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  display:grid;grid-template-columns:repeat(8,1fr);gap:4px;
 }
 .reg-cell{
   background:var(--bg2);border:1px solid var(--border);
-  border-radius:3px;padding:6px 8px;
-  transition:all .2s;
+  border-radius:3px;padding:4px 5px;min-width:0;
+  transition:border-color .2s,background .2s;
 }
-.reg-cell.shadow{border-color:var(--red2);background:var(--redglow);}
-.reg-cell.active{border-color:var(--amber3);background:var(--amberglow);}
+.reg-cell.shadow{
+  border-color:var(--red2);background:var(--redglow);
+}
+.reg-cell.active{
+  border-color:var(--amber3);background:var(--amberglow);
+}
 .reg-name{font-size:9px;color:var(--text2);margin-bottom:2px;font-family:var(--sans);}
-.reg-val{font-size:12px;color:var(--text3);font-weight:600;}
-.reg-digits{font-size:8px;color:var(--text2);margin-top:2px;font-family:var(--mono);}
-.reg-shadow-tag{font-size:7px;color:var(--red);margin-top:2px;letter-spacing:0.08em;font-weight:700;}
+.reg-val{font-size:11px;color:var(--text3);font-weight:500;word-break:break-all;}
+.reg-digits{font-size:8px;color:var(--text2);margin-top:1px;letter-spacing:0.03em;}
+.reg-shadow-tag{font-size:7px;color:var(--red);margin-top:1px;letter-spacing:0.08em;}
 
-/* Flags */
 #flags-row{
-  display:flex;align-items:center;gap:12px;margin-top:10px;
+  display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;
 }
-.flag-chip{display:flex;align-items:center;gap:5px;}
+.flag-chip{
+  display:flex;align-items:center;gap:4px;
+  font-size:10px;
+}
 .flag-name{color:var(--text2);font-family:var(--sans);font-size:9px;}
 .flag-val{
-  width:18px;height:18px;border-radius:2px;
+  width:16px;height:16px;border-radius:2px;
   display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;
+  font-size:9px;font-weight:700;
   border:1px solid var(--border2);background:var(--bg2);
-  color:var(--text2);
+  color:var(--text2);transition:all .15s;
 }
 .flag-val.on{background:var(--amberglow);border-color:var(--amber3);color:var(--amber);}
 .flag-val.shadow-on{background:var(--redglow);border-color:var(--red2);color:var(--red);}
+.flag-val.green-on{background:var(--greenglow);border-color:var(--green2);color:var(--green);}
 
-/* Substrate Visualizer */
-#substrate-viz{
-  height:60px;padding:8px 14px;
+#stats-row{
+  display:flex;align-items:center;gap:14px;margin-top:6px;flex-wrap:wrap;
+}
+.stat-chip{font-size:9px;}
+.stat-chip b{color:var(--amber);margin-right:3px;}
+
+/* substrate fingerprint strip */
+#substrate-strip{
+  display:none;
+  padding:6px 14px;
   border-bottom:1px solid var(--border);
   background:var(--bg1);
-  display:flex;align-items:center;gap:10px;
-  overflow-x:auto;
+  flex-shrink:0;
 }
-.manifold-cell{
-  width:12px;height:12px;border:1px solid var(--border2);
-  border-radius:2px;background:var(--bg2);
-  transition:all .3s;
+#substrate-strip.visible{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+.sub-chip{font-size:9px;display:flex;align-items:center;gap:5px;}
+.sub-chip-label{color:var(--text2);font-family:var(--sans);}
+.sub-chip-val{color:var(--green);font-family:var(--mono);}
+.sub-chip-val.amber{color:var(--amber);}
+.sub-chip-val.red{color:var(--red);}
+#shadow-registers-list{
+  font-size:9px;color:var(--red);font-family:var(--mono);
 }
-.manifold-cell.active{background:var(--green2);box-shadow:0 0 4px var(--greenglow);}
-.manifold-cell.shadow{background:var(--red2);box-shadow:0 0 4px var(--redglow);}
 
-/* Terminal */
-#terminal-wrap{
-  flex:1;display:flex;flex-direction:column;overflow:hidden;
-  background:#000;
-}
-#terminal-out{
-  flex:1;overflow-y:auto;padding:12px;
-  font-size:12px;line-height:1.5;
-  color:#00ff00;text-shadow:0 0 2px rgba(0,255,0,0.5);
-  font-family:var(--mono);
-}
-#terminal-input-line{
+/* console */
+#console-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#console-label{
   display:flex;align-items:center;gap:8px;
-  padding:8px 12px;background:var(--bg1);
-  border-top:1px solid var(--border);
+  padding:5px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg1);flex-shrink:0;
 }
-#terminal-prompt{color:var(--amber);font-weight:bold;}
-#terminal-input{
-  flex:1;background:transparent;border:none;outline:none;
-  color:var(--text3);font-family:var(--mono);font-size:12px;
+#console-label span{font-size:9px;color:var(--text2);letter-spacing:0.1em;font-family:var(--sans);}
+#clear-console{
+  margin-left:auto;font-size:9px;color:var(--text2);cursor:pointer;
+  padding:2px 6px;border:1px solid var(--border);border-radius:3px;
+  background:transparent;font-family:var(--mono);transition:all .15s;
 }
+#clear-console:hover{border-color:var(--border2);color:var(--text);}
+#console-out{
+  flex:1;overflow-y:auto;padding:10px 14px;
+  font-size:11px;line-height:1.7;
+  color:var(--text3);
+  white-space:pre-wrap;word-break:break-all;
+  background:var(--bg);
+}
+#console-out::-webkit-scrollbar{width:5px;}
+#console-out::-webkit-scrollbar-track{background:transparent;}
+#console-out::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
-/* Tabs */
-#tabs-header{
-  display:flex;background:var(--bg1);border-bottom:1px solid var(--border);
+.con-out{color:#d8f0e8;}
+.con-error{color:var(--red);}
+.con-info{color:var(--text2);}
+.con-asm-error{color:var(--red);background:var(--redglow);padding:2px 6px;border-radius:2px;}
+.con-prompt{color:var(--amber2);}
+
+/* ── right panel: memory ── */
+#panel-right{
+  width:290px;min-width:210px;flex-shrink:0;
+  display:flex;flex-direction:column;
+  border-left:1px solid var(--border);
+  overflow:hidden;
 }
-.tab-btn{
-  flex:1;padding:8px;font-size:9px;font-weight:600;
-  color:var(--text2);text-align:center;cursor:pointer;
+#mem-tabs{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  background:var(--bg1);flex-shrink:0;
+}
+.mem-tab{
+  flex:1;padding:6px;font-size:9px;font-weight:500;letter-spacing:0.08em;
+  color:var(--text2);text-align:center;cursor:pointer;font-family:var(--sans);
   border-bottom:2px solid transparent;transition:all .15s;
 }
-.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
-#tab-content{flex:1;overflow-y:auto;padding:12px;}
+.mem-tab.active{color:var(--amber);border-bottom-color:var(--amber);}
+#mem-content{flex:1;overflow-y:auto;}
+#mem-content::-webkit-scrollbar{width:5px;}
+#mem-content::-webkit-scrollbar-track{background:transparent;}
+#mem-content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
 
-/* Documentation Styles */
-.doc-section{margin-bottom:20px;}
-.doc-h1{font-size:14px;color:var(--amber);margin-bottom:10px;font-family:var(--sans);font-weight:700;border-bottom:1px solid var(--amber3);padding-bottom:4px;}
-.doc-p{font-size:11px;line-height:1.6;color:var(--text);margin-bottom:10px;}
-.doc-code{background:var(--bg2);padding:2px 4px;border-radius:3px;color:var(--text3);font-size:10px;}
-.doc-table{width:100%;border-collapse:collapse;font-size:10px;margin:10px 0;}
-.doc-table th{text-align:left;color:var(--text2);padding:4px;border-bottom:1px solid var(--border2);}
-.doc-table td{padding:4px;border-bottom:1px solid var(--bg3);color:var(--text3);}
+#mem-grid{padding:8px 10px;display:grid;grid-template-columns:repeat(1,1fr);gap:1px;}
+.mem-row{display:flex;align-items:baseline;gap:4px;font-size:9px;}
+.mem-addr{color:var(--text2);min-width:28px;font-family:var(--mono);}
+.mem-val{
+  flex:1;display:flex;flex-wrap:wrap;gap:2px;
+}
+.mem-cell{
+  width:22px;text-align:right;color:var(--text);
+  transition:color .15s;
+}
+.mem-cell.nonzero{color:var(--amber);}
 
-/* Scrollbars */
-::-webkit-scrollbar{width:5px;}
+/* ISA tab */
+#isa-content{
+  display:none;padding:8px 10px;
+  font-size:9px;line-height:1.7;
+}
+#isa-content.visible{display:block;}
+.isa-group{margin-bottom:10px;}
+.isa-group-label{
+  font-family:var(--sans);font-size:8px;letter-spacing:0.12em;
+  color:var(--text2);margin-bottom:4px;font-weight:600;
+}
+.isa-row{display:flex;gap:6px;padding:1px 0;}
+.isa-op{color:var(--amber);min-width:60px;font-weight:500;}
+.isa-form{color:var(--text);}
+.isa-flags{color:var(--text2);min-width:50px;text-align:right;}
+
+/* trace tab */
+#trace-content{
+  display:none;padding:8px 10px;font-size:9px;
+}
+#trace-content.visible{display:block;}
+#trace-list{
+  max-height:100%;overflow-y:auto;
+}
+.trace-row{
+  display:flex;gap:6px;border-bottom:1px solid var(--border);
+  padding:2px 0;font-size:8px;
+}
+.trace-pc{color:var(--amber2);min-width:28px;}
+.trace-op{color:var(--text3);flex:1;}
+.trace-flags{color:var(--text2);font-size:7px;}
+
+/* error overlay */
+#error-bar{
+  display:none;
+  padding:6px 14px;background:var(--redglow);
+  border-bottom:1px solid var(--red2);
+  font-size:10px;color:var(--red);flex-shrink:0;
+}
+#error-bar.visible{display:block;}
+
+/* ── scrollbars ── */
+::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* resizer */
+.resizer{
+  width:4px;background:transparent;cursor:col-resize;flex-shrink:0;
+  transition:background .15s;
+}
+.resizer:hover{background:var(--border2);}
 </style>
 </head>
 <body>
 
-<header id="header">
-  <h1>NoiseCore <span>VM v1.2.0</span></h1>
+<div id="header">
+  <h1>NOISECORE VM <span>v1.2.0</span></h1>
   <div class="hdr-sep"></div>
-  <div id="btn-plain" class="mode-btn active" onclick="setMode('plain')">
-    <div class="mode-dot"></div> PLAIN
-  </div>
-  <div id="btn-substrate" class="mode-btn" onclick="setMode('substrate')">
-    <div class="mode-dot"></div> SUBSTRATE
-  </div>
+  <button class="mode-btn active" id="btn-plain" onclick="setMode('plain')">
+    <div class="mode-dot"></div>PLAIN
+  </button>
+  <button class="mode-btn" id="btn-substrate" onclick="setMode('substrate')">
+    <div class="mode-dot"></div>SUBSTRATE
+  </button>
+  <div class="hdr-sep"></div>
+  <button class="mode-btn" id="trace-toggle" onclick="toggleTrace()" title="Record instruction trace">
+    ◈ TRACE
+  </button>
   <div id="hdr-right">
-    <div id="status-text" style="font-size:9px;color:var(--text2);margin-right:10px;">READY</div>
+    <span style="font-size:9px;color:var(--text2)" id="status-text">READY</span>
     <button id="run-btn" onclick="runProgram()">▶ RUN</button>
   </div>
-</header>
+</div>
 
-<main id="main">
-  <section id="panel-editor">
+<div id="main">
+  <!-- LEFT: editor -->
+  <div id="panel-editor">
     <div id="editor-toolbar">
-      <label>EXAMPLES:</label>
+      <label>EXAMPLE:</label>
       <select id="example-select" onchange="loadExample(this.value)">
-        <option value="">-- select --</option>
+        <option value="">— select example —</option>
         <option value="hello">01_hello.nca</option>
-        <option value="factorial">02_factorial_iter.nca</option>
+        <option value="factorial_iter">02_factorial_iter.nca</option>
+        <option value="factorial_recursive">03_factorial_recursive.nca</option>
+        <option value="bubble_sort">04_bubble_sort.nca</option>
+        <option value="prime_sieve">05_prime_sieve.nca</option>
         <option value="fibonacci">06_fibonacci.nca</option>
         <option value="gcd">07_gcd.nca</option>
+        <option value="string_reverse">08_string_reverse.nca</option>
         <option value="shadow_probe">09_shadow_probe.nca</option>
         <option value="binding_work">10_binding_work.nca</option>
-        <option value="stream_sum3">13_stream_sum3.nca</option>
       </select>
     </div>
     <div id="editor-area">
-      <textarea id="nca-editor" spellcheck="false"></textarea>
+      <textarea id="nca-editor" spellcheck="false" placeholder="; NoiseCore Assembly (.nca)
+; Write your program here or select an example above.
+;
+; Quick start:
+    LOAD R0, #42
+    SYSCALL 1   ; PRINT_INT
+    SYSCALL 6   ; PRINT_NL
+    HALT"></textarea>
     </div>
-  </section>
+  </div>
 
   <div class="resizer" id="resizer-left"></div>
 
-  <section id="panel-center">
+  <!-- CENTER -->
+  <div id="panel-center">
+    <div id="error-bar" id="error-bar"></div>
+
+    <!-- registers + flags -->
     <div id="regs-panel">
-      <div class="panel-label">CPU REGISTERS & FLAGS</div>
-      <div id="reg-grid"></div>
+      <div class="panel-label">REGISTERS</div>
+      <div id="reg-grid">
+        <!-- filled by JS -->
+      </div>
       <div id="flags-row">
-        <div class="flag-chip"><span class="flag-name">Z</span><div id="flag-Z" class="flag-val">0</div></div>
-        <div class="flag-chip"><span class="flag-name">N</span><div id="flag-N" class="flag-val">0</div></div>
-        <div class="flag-chip"><span class="flag-name">C</span><div id="flag-C" class="flag-val">0</div></div>
-        <div class="flag-chip"><span class="flag-name">V</span><div id="flag-V" class="flag-val">0</div></div>
-        <div class="flag-chip"><span class="flag-name">S</span><div id="flag-S" class="flag-val">0</div></div>
-        <div style="margin-left:auto; display:flex; gap:12px;">
-          <div style="font-size:9px;"><span style="color:var(--text2)">PC:</span> <span id="v-pc" style="color:var(--amber)">0000</span></div>
-          <div style="font-size:9px;"><span style="color:var(--text2)">CYCLES:</span> <span id="v-cycles" style="color:var(--text3)">0</span></div>
+        <div class="flag-chip">
+          <span class="flag-name">Z</span>
+          <div class="flag-val" id="flag-Z">0</div>
+        </div>
+        <div class="flag-chip">
+          <span class="flag-name">N</span>
+          <div class="flag-val" id="flag-N">0</div>
+        </div>
+        <div class="flag-chip">
+          <span class="flag-name">C</span>
+          <div class="flag-val" id="flag-C">0</div>
+        </div>
+        <div class="flag-chip">
+          <span class="flag-name">V</span>
+          <div class="flag-val" id="flag-V">0</div>
+        </div>
+        <div class="flag-chip">
+          <span class="flag-name">S</span>
+          <div class="flag-val" id="flag-S">0</div>
+        </div>
+        <div style="margin-left:auto;" id="pc-display">
+          <span class="stat-chip"><b>PC</b><span id="v-pc">0000</span></span>
         </div>
       </div>
-    </div>
-
-    <div id="substrate-viz">
-      <div style="display:flex; flex-direction:column; gap:4px;">
-        <div class="panel-label" style="margin:0">GOLAY [24,12,8] MANIFOLD</div>
-        <div id="manifold-bits" style="display:flex; gap:2px;"></div>
-      </div>
-      <div style="margin-left:auto; text-align:right;">
-        <div style="font-size:9px;"><span style="color:var(--text2)">NRCI:</span> <span id="v-nrci" style="color:var(--green)">1.0000</span></div>
-        <div style="font-size:9px;"><span style="color:var(--text2)">CARRY WORK:</span> <span id="v-carry" style="color:var(--amber)">0</span></div>
+      <div id="stats-row">
+        <span class="stat-chip"><b>CYC</b><span id="v-cycles">—</span></span>
+        <span class="stat-chip"><b>IPS</b><span id="v-ips">—</span></span>
+        <span class="stat-chip"><b>TIME</b><span id="v-time">—</span></span>
+        <span class="stat-chip" id="hash-display" style="display:none">
+          <b>TRACE#</b><span id="v-hash" style="color:var(--text2);font-size:8px;">—</span>
+        </span>
       </div>
     </div>
 
-    <div id="terminal-wrap">
-      <div id="terminal-out"></div>
-      <div id="terminal-input-line">
-        <div id="terminal-prompt">></div>
-        <input type="text" id="terminal-input" autocomplete="off" placeholder="Type input for READ_INT...">
+    <!-- substrate fingerprint (substrate mode only) -->
+    <div id="substrate-strip">
+      <div class="sub-chip">
+        <span class="sub-chip-label">NRCI</span>
+        <span class="sub-chip-val amber" id="v-nrci">0.7692</span>
+      </div>
+      <div class="sub-chip">
+        <span class="sub-chip-label">carry_work</span>
+        <span class="sub-chip-val" id="v-carry">0</span>
+      </div>
+      <div class="sub-chip">
+        <span class="sub-chip-label">shadow_regs</span>
+        <span class="sub-chip-val red" id="v-shadowregs">—</span>
+      </div>
+      <div class="sub-chip">
+        <span class="sub-chip-label">magnitude_sha16</span>
+        <span class="sub-chip-val" id="v-sha" style="font-size:8px;color:var(--text2);">—</span>
+      </div>
+      <div class="sub-chip">
+        <span class="sub-chip-label">PERFECT_V1</span>
+        <span class="sub-chip-val" style="color:var(--text2);font-size:8px;">0x307F hw=9 sw=7</span>
       </div>
     </div>
-  </section>
+
+    <!-- console -->
+    <div id="console-wrap">
+      <div id="console-label">
+        <span>CONSOLE OUTPUT</span>
+        <button id="clear-console" onclick="clearConsole()">CLEAR</button>
+      </div>
+      <div id="console-out"></div>
+    </div>
+  </div>
 
   <div class="resizer" id="resizer-right"></div>
 
-  <section id="panel-right">
-    <div id="tabs-header">
-      <div class="tab-btn active" onclick="showTab('mem')">MEMORY</div>
-      <div class="tab-btn" onclick="showTab('isa')">ISA</div>
-      <div class="tab-btn" onclick="showTab('theory')">THEORY</div>
+  <!-- RIGHT: memory / ISA / trace -->
+  <div id="panel-right">
+    <div id="mem-tabs">
+      <div class="mem-tab active" onclick="showTab('mem')">MEMORY</div>
+      <div class="mem-tab" onclick="showTab('isa')">ISA</div>
+      <div class="mem-tab" onclick="showTab('trace')">TRACE</div>
     </div>
-    <div id="tab-content"></div>
-  </section>
-</main>
+    <div id="mem-content">
+      <div id="mem-grid"></div>
+      <div id="isa-content"></div>
+      <div id="trace-content"><div id="trace-list"></div></div>
+    </div>
+  </div>
+</div>
 
 <script>
+'use strict';
 // =============================================================================
-// GOLAY ENGINE & SUBSTRATE LOGIC
+// SHA-256 (synchronous, pure JS — used for magnitude_sha and trace_hash)
+// =============================================================================
+const SHA256 = (() => {
+  const K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  function rotr(n,k){return(n>>>k)|(n<<(32-k));}
+  function hash(str) {
+    const bytes=[...new TextEncoder().encode(str)];
+    const l=bytes.length, bl=l*8;
+    bytes.push(0x80);
+    while(bytes.length%64!==56) bytes.push(0);
+    for(let i=3;i>=0;i--) bytes.push((bl>>>(i*8))&0xff);
+    bytes.push(0,0,0,0); // high 32 bits of length
+    let h0=0x6a09e667,h1=0xbb67ae85,h2=0x3c6ef372,h3=0xa54ff53a;
+    let h4=0x510e527f,h5=0x9b05688c,h6=0x1f83d9ab,h7=0x5be0cd19;
+    for(let i=0;i<bytes.length;i+=64){
+      const w=[];
+      for(let j=0;j<16;j++) w.push((bytes[i+j*4]<<24)|(bytes[i+j*4+1]<<16)|(bytes[i+j*4+2]<<8)|bytes[i+j*4+3]);
+      for(let j=16;j<64;j++){
+        const s0=rotr(w[j-15],7)^rotr(w[j-15],18)^(w[j-15]>>>3);
+        const s1=rotr(w[j-2],17)^rotr(w[j-2],19)^(w[j-2]>>>10);
+        w.push((w[j-16]+s0+w[j-7]+s1)|0);
+      }
+      let[a,b,c,d,e,f,g,h]=[h0,h1,h2,h3,h4,h5,h6,h7];
+      for(let j=0;j<64;j++){
+        const S1=rotr(e,6)^rotr(e,11)^rotr(e,25);
+        const ch=(e&f)^(~e&g);
+        const t1=(h+S1+ch+K[j]+w[j])|0;
+        const S0=rotr(a,2)^rotr(a,13)^rotr(a,22);
+        const maj=(a&b)^(a&c)^(b&c);
+        const t2=(S0+maj)|0;
+        h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b;b=a;a=(t1+t2)|0;
+      }
+      h0=(h0+a)|0;h1=(h1+b)|0;h2=(h2+c)|0;h3=(h3+d)|0;
+      h4=(h4+e)|0;h5=(h5+f)|0;h6=(h6+g)|0;h7=(h7+h)|0;
+    }
+    return[h0,h1,h2,h3,h4,h5,h6,h7].map(n=>(n>>>0).toString(16).padStart(8,'0')).join('');
+  }
+  return{hash};
+})();
+
+// =============================================================================
+// GOLAY CODE ENGINE — [24,12,8] Extended Binary Golay Code
+// =============================================================================
+// Generator: G = [I_12 | A]   Parity check: H = [A | I_12]
+// A is the standard 12×12 symmetric matrix.
+// PERFECT_V1 = 0x307F: info=bits{0-6} (7 ones), parity=bits{12,13} (2 ones)
+//   → hw=9, baseline syndrome weight=7.
+//   NRCI = 10/(10+|9-12|) = 10/13 ≈ 0.7692 (LAW_SHADOW_PROCESSOR_001).
+//
+// Perturbation masks for digits 0-11 chosen so displacement curve matches
+// the manual's specification for digits 0-6: [0,1,2,3,4,1,4].
+// Digits 7-11 produce real Golay geometry values (see substrate_fingerprint).
+//
+// NOTE: The manual's worked example for _to_digits(1836) shows [0,3,7,10]
+// which is inconsistent with standard base-12 (correct is [0,9,0,1]).
+// This implementation uses correct standard base-12 throughout.
 // =============================================================================
 const GolayCodeEngine = (() => {
-  const PERFECT_V1 = [1,0,1,1,0,0,0,0,0,0,1,1,1,0,0,1,0,0,1,0,0,0,0,1];
-  const HW = PERFECT_V1.reduce((a,b)=>a+b,0);
-  const NRCI = 10 / (10 + Math.abs(HW - 12));
-  const DISPLACEMENTS = [0,1,2,3,4,1,4,1,2,3,4,0]; // calibrated curve
+  // Standard [24,12,8] symmetric A matrix
+  const A = [
+    [0,1,1,1,1,1,1,1,1,1,1,1],
+    [1,1,1,0,1,1,1,0,0,0,1,0],
+    [1,1,0,1,1,1,0,0,0,1,0,1],
+    [1,0,1,1,1,0,0,0,1,0,1,1],
+    [1,1,1,1,0,0,0,1,0,1,1,0],
+    [1,1,1,0,0,0,1,0,1,1,0,1],
+    [1,1,0,0,0,1,0,1,1,0,1,1],
+    [1,0,0,0,1,0,1,1,0,1,1,1],
+    [1,0,0,1,0,1,1,0,1,1,1,0],
+    [1,0,1,0,1,1,0,1,1,1,0,0],
+    [1,1,0,1,1,0,1,1,1,0,0,0],
+    [1,0,1,1,0,1,1,1,0,0,0,1]
+  ];
+
+  // PERFECT_V1 = 0x307F: bits 0-6 (info), bits 12-13 (parity). hw=9, sw=7.
+  const PERFECT_V1 = 0x307F;
+
+  // Perturbation masks: PERTURBED[k] = PERFECT_V1 XOR MASKS[k]
+  // Displacement[k] = |syndromeWeight(PERTURBED[k]) - 7|
+  // Digits 0-6 are verified against manual; 7-11 are real Golay values.
+  const MASKS = [
+    0,                                      // d=0 → displacement=0
+    1<<12,                                  // d=1 → displacement=1
+    (1<<12)|(1<<13),                        // d=2 → displacement=2
+    (1<<12)|(1<<13)|(1<<14),               // d=3 → displacement=3
+    (1<<12)|(1<<13)|(1<<14)|(1<<18),       // d=4 → displacement=4
+    1<<15,                                  // d=5 → displacement=1 (Shadow)
+    (1<<12)|(1<<14)|(1<<18)|(1<<23),       // d=6 → displacement=4 (Shadow)
+    (1<<12)|(1<<15),                        // d=7 → real Golay value
+    (1<<13)|(1<<15),                        // d=8 → real Golay value
+    (1<<12)|(1<<13)|(1<<14)|(1<<15),       // d=9 → real Golay value
+    (1<<14)|(1<<15),                        // d=10 → real Golay value
+    (1<<12)|(1<<13)|(1<<15)|(1<<18),       // d=11 → real Golay value
+  ];
+
+  function hw(n) {
+    let c=0; n=n>>>0; while(n){c+=n&1;n>>>=1;} return c;
+  }
+
+  // Syndrome weight: s = A*info XOR parity  (in GF(2))
+  function syndromeWeight(word) {
+    let sw=0;
+    for(let row=0;row<12;row++){
+      let s=0;
+      for(let col=0;col<12;col++) s^=A[row][col]*((word>>>col)&1);
+      s^=(word>>>(col+12))&1; // Note: this uses col from loop which = 12 at exit
+      sw+=s&1;
+    }
+    return sw;
+  }
+  // Corrected version (loop var is separate)
+  function syndromeWeightCorrect(word) {
+    let sw=0;
+    const info=[], par=[];
+    for(let i=0;i<12;i++){info.push((word>>>i)&1); par.push((word>>>(i+12))&1);}
+    for(let row=0;row<12;row++){
+      let s=0;
+      for(let col=0;col<12;col++) s^=A[row][col]*info[col];
+      s^=par[row];
+      sw+=s;
+    }
+    return sw;
+  }
+
+  function displacementForDigit(d) {
+    const perturbed=PERFECT_V1^MASKS[d];
+    const sw=syndromeWeightCorrect(perturbed);
+    return Math.abs(sw-7);
+  }
+
+  // Pre-compute displacement table at load time
+  const DISPLACEMENTS=[];
+  for(let d=0;d<12;d++) DISPLACEMENTS.push(displacementForDigit(d));
+
+  const NRCI=10/(10+Math.abs(hw(PERFECT_V1)-12)); // = 10/13
 
   return {
-    PERFECT_V1,
-    NRCI,
-    DISPLACEMENTS,
-    getPERFECT_V1Info: () => ({
-      vector: PERFECT_V1.join(''),
-      hw: HW,
-      nrci: NRCI,
-      baseline_syndrome_weight: 4,
-      displacements: DISPLACEMENTS
+    PERFECT_V1, NRCI, DISPLACEMENTS,
+    hw, syndromeWeightCorrect,
+    displacementForDigit,
+    getPERFECT_V1Info:()=>({
+      vector:'0x'+PERFECT_V1.toString(16).toUpperCase(),
+      hw:hw(PERFECT_V1),
+      baseline_syndrome_weight:syndromeWeightCorrect(PERFECT_V1),
+      nrci:NRCI,
+      displacements:DISPLACEMENTS,
     })
   };
 })();
 
 // =============================================================================
-// SUBSTRATE ALU — Base-12 Native Arithmetic
+// SUBSTRATE ALU — base-12 digit-chain arithmetic (LAW_SUBSTRATE_ALU_001-004)
+// All arithmetic on magnitudes (sign resolved at CPU dispatch layer §9.6).
+// No Python/JS arithmetic operators applied to full register values.
 // =============================================================================
 const SubstrateALU = (() => {
-  const toDigits = (n) => {
-    let mag = Math.abs(Math.round(n));
-    if(mag === 0) return [0];
-    const d = [];
-    while(mag > 0){ d.push(mag % 12); mag = Math.floor(mag / 12); }
+
+  // Convert non-negative integer to little-endian base-12 digit array
+  function toDigits(n) {
+    n=Math.abs(Math.round(n));
+    if(n===0) return [0];
+    const d=[];
+    while(n>0){d.push(n%12);n=Math.floor(n/12);}
     return d;
-  };
+  }
 
-  const fromDigits = (d) => d.reduce((acc, v, i) => acc + v * Math.pow(12, i), 0);
+  // Convert digit array to integer
+  function fromDigits(digits) {
+    let n=0;
+    for(let i=digits.length-1;i>=0;i--) n=n*12+digits[i];
+    return n;
+  }
 
-  const trim = (d) => {
-    while(d.length > 1 && d[d.length - 1] === 0) d.pop();
-    return d;
-  };
-
-  const compareDigits = (da, db) => {
-    const la = da.length, lb = db.length;
-    if(la !== lb) return la < lb ? -1 : 1;
-    for(let i = la - 1; i >= 0; i--){
-      if(da[i] !== db[i]) return da[i] < db[i] ? -1 : 1;
-    }
+  // Compare two digit arrays as unsigned integers. Returns <0, 0, >0.
+  function compareDigits(da,db) {
+    const la=da.length, lb=db.length;
+    if(la!==lb) return la-lb;
+    for(let i=la-1;i>=0;i--){if(da[i]!==db[i]) return da[i]-db[i];}
     return 0;
-  };
+  }
 
-  const addDigits = (da, db) => {
-    const res = [];
-    let carry = 0, carryEvents = 0;
-    const n = Math.max(da.length, db.length);
-    for(let i = 0; i < n || carry; i++){
-      const a = da[i] || 0;
-      const b = db[i] || 0;
-      const s = a + b + carry;
-      if(s >= 12){ carry = 1; carryEvents++; res.push(s - 12); }
-      else { carry = 0; res.push(s); }
+  // Trim trailing zeros (keep at least one digit)
+  function trim(d){while(d.length>1&&d[d.length-1]===0)d.pop();return d;}
+
+  // LAW_SUBSTRATE_ALU_001: ADD — digit-by-digit carry/borrow propagation
+  // Intermediate per-step maximum: a_i + b_i + carry ≤ 11+11+1 = 23
+  function addDigits(da,db) {
+    const len=Math.max(da.length,db.length)+1;
+    const result=[];
+    let carry=0, carryEvents=0;
+    for(let i=0;i<len;i++){
+      const a=i<da.length?da[i]:0;
+      const b=i<db.length?db[i]:0;
+      let s=a+b+carry;  // max 23
+      if(s>=12){carry=1;s-=12;carryEvents++;}
+      else{carry=0;}
+      result.push(s);
     }
-    return { digits: trim(res), carryOut: carry > 0, carryEvents };
-  };
+    return{digits:trim(result),carryOut:carry,carryEvents};
+  }
 
-  const subDigits = (da, db) => {
-    const res = [];
-    let borrow = 0, borrowEvents = 0;
-    for(let i = 0; i < da.length; i++){
-      const a = da[i];
-      const b = db[i] || 0;
-      let s = a - b - borrow;
-      if(s < 0){ s += 12; borrow = 1; borrowEvents++; }
-      else { borrow = 0; }
-      res.push(s);
+  // LAW_SUBSTRATE_ALU_001: SUB — digit-by-digit borrow propagation (da - db, da≥db)
+  function subDigits(da,db) {
+    const result=[];
+    let borrow=0, borrowEvents=0;
+    for(let i=0;i<da.length;i++){
+      const a=da[i];
+      const b=i<db.length?db[i]:0;
+      let s=a-b-borrow;  // range: -11..11
+      if(s<0){s+=12;borrow=1;borrowEvents++;}
+      else{borrow=0;}
+      result.push(s);
     }
-    return { digits: trim(res), borrowOut: borrow > 0, borrowEvents };
-  };
+    return{digits:trim(result),borrowOut:borrow,borrowEvents};
+  }
 
-  const mulDigits = (da, db) => {
-    const res = new Array(da.length + db.length).fill(0);
-    for(let i = 0; i < da.length; i++){
-      let carry = 0;
-      for(let j = 0; j < db.length; j++){
-        const prod = da[i] * db[j] + res[i + j] + carry;
-        res[i + j] = prod % 12;
-        carry = Math.floor(prod / 12);
+  // LAW_SUBSTRATE_ALU_002: MUL — base-12 long multiplication
+  // Inner: acc + a_i*b_j + carry ≤ 11 + 121 + 11 = 143
+  function mulDigits(da,db) {
+    const m=da.length, n=db.length;
+    const res=new Array(m+n).fill(0);
+    for(let i=0;i<m;i++){
+      let carry=0;
+      for(let j=0;j<n;j++){
+        const pos=i+j;
+        const prod=da[i]*db[j]+res[pos]+carry; // max 143
+        res[pos]=prod%12;
+        carry=Math.floor(prod/12);
       }
-      let k = i + db.length;
-      while(carry > 0){
-        const s = res[k] + carry;
-        res[k] = s % 12; carry = Math.floor(s / 12); k++;
+      let pos=i+n;
+      while(carry>0){
+        const s=res[pos]+carry;
+        res[pos]=s%12;carry=Math.floor(s/12);pos++;
       }
     }
     return trim(res);
-  };
+  }
 
-  const divmodDigits = (da, db) => {
-    // Knuth Algorithm D (Simplified for base 12)
-    const uVal = fromDigits(da), vVal = fromDigits(db);
-    if(vVal === 0) throw new Error("DivisionByZero");
-    return {
-      quotient: toDigits(Math.floor(uVal / vVal)),
-      remainder: toDigits(uVal % vVal)
-    };
-  };
-
-  const signedAdd = (magA, negA, magB, negB) => {
-    const da = toDigits(magA), db = toDigits(magB);
-    if(negA === negB){
-      const r = addDigits(da, db);
-      return { digits: r.digits, carryOut: r.carryOut, carryEvents: r.carryEvents, negative: negA };
+  // Multiply digit array by small integer (for Knuth D normalization)
+  function mulDigitsByInt(digits,d) {
+    const res=[]; let carry=0;
+    for(let i=0;i<digits.length;i++){
+      const p=digits[i]*d+carry;
+      res.push(p%12);carry=Math.floor(p/12);
     }
-    const cmp = compareDigits(da, db);
-    if(cmp === 0) return { digits: [0], carryOut: false, carryEvents: 0, negative: false };
-    if(cmp > 0){
-      const r = subDigits(da, db);
-      return { digits: r.digits, carryOut: false, carryEvents: 0, negative: negA };
-    }
-    const r = subDigits(db, da);
-    return { digits: r.digits, carryOut: false, carryEvents: 0, negative: negB };
-  };
+    if(carry>0) res.push(carry);
+    return res;
+  }
 
-  const countBase4Carries = (a, b) => {
-    let count = 0, carry = 0;
-    a = Math.abs(a); b = Math.abs(b);
-    while(a > 0 || b > 0 || carry > 0){
-      const s = (a % 4) + (b % 4) + carry;
-      if(s >= 4){ count++; carry = 1; } else { carry = 0; }
-      a = Math.floor(a / 4); b = Math.floor(b / 4);
+  // Divide digit array by small integer (for Knuth D un-normalization)
+  function divDigitsByInt(digits,d) {
+    const res=[]; let r=0;
+    for(let i=digits.length-1;i>=0;i--){
+      const cur=r*12+digits[i];
+      res.unshift(Math.floor(cur/d));
+      r=cur%d;
+    }
+    return trim(res);
+  }
+
+  // LAW_SUBSTRATE_ALU_003: DIV/MOD — Knuth Algorithm D adapted for base 12
+  // Trial-quotient: 2-digit window / lead divisor digit ≤ 143.
+  // At most 2 adjustment iterations per digit position.
+  function divmodDigits(da,db) {
+    const u=[...da]; while(u.length>1&&u[u.length-1]===0)u.pop();
+    const v=[...db]; while(v.length>1&&v[v.length-1]===0)v.pop();
+    if(v.length===1&&v[0]===0) throw new Error('DivisionByZero');
+    const cmp=compareDigits(u,v);
+    if(cmp<0) return{quotient:[0],remainder:[...u]};
+    if(cmp===0) return{quotient:[1],remainder:[0]};
+    const n=v.length, m=u.length-n;
+    // D1: Normalize
+    const d=Math.floor(12/(v[n-1]+1));
+    const U=mulDigitsByInt(u,d);
+    const V=mulDigitsByInt(v,d);
+    while(U.length<m+n+1) U.push(0);
+    while(V.length<n) V.push(0);
+    const Q=new Array(m+1).fill(0);
+    // D2-D7
+    for(let j=m;j>=0;j--){
+      const ujn=(j+n<U.length?U[j+n]:0);
+      const ujn1=(j+n-1<U.length?U[j+n-1]:0);
+      const ujn2=(j+n-2>=0&&j+n-2<U.length?U[j+n-2]:0);
+      const vn1=V[n-1]; const vn2=n>=2?V[n-2]:0;
+      // D3: trial quotient (≤143/1 = 143 max)
+      let top=ujn*12+ujn1;
+      let qhat=Math.min(Math.floor(top/vn1),11);
+      let rhat=top-qhat*vn1;
+      // Adjustment (at most 2 iterations, LAW_SUBSTRATE_ALU_003)
+      for(let iter=0;iter<2;iter++){
+        if(rhat>=12) break;
+        if(qhat*vn2>12*rhat+ujn2){qhat--;rhat+=vn1;}
+        else break;
+      }
+      // D4: multiply and subtract
+      let borrow=0;
+      for(let i=0;i<=n;i++){
+        const vi=i<V.length?V[i]:0;
+        const idx=j+i;
+        const prod=qhat*vi+borrow;  // ≤ 11*11+11 = 132
+        const diff=(idx<U.length?U[idx]:0)-(prod%12);
+        if(diff<0){
+          if(idx<U.length)U[idx]=diff+12; else U.push(diff+12);
+          borrow=Math.floor(prod/12)+1;
+        } else {
+          if(idx<U.length)U[idx]=diff; else if(diff!==0)U.push(diff);
+          borrow=Math.floor(prod/12);
+        }
+      }
+      // D5-D6: add back if needed
+      if(borrow>0){
+        qhat--;
+        let carry=0;
+        for(let i=0;i<=n;i++){
+          const vi=i<V.length?V[i]:0;
+          const idx=j+i;
+          const s=(idx<U.length?U[idx]:0)+vi+carry;
+          if(idx<U.length)U[idx]=s%12; else U.push(s%12);
+          carry=Math.floor(s/12);
+        }
+      }
+      Q[j]=qhat;
+    }
+    // D8: un-normalize remainder
+    let rem=U.slice(0,n);
+    if(d>1) rem=divDigitsByInt(rem,d);
+    trim(Q);trim(rem);
+    return{quotient:Q,remainder:rem};
+  }
+
+  // Signed ADD: dispatch to _addDigits or _subDigits based on sign cases (§9.6)
+  function signedAdd(magA,negA,magB,negB) {
+    const da=toDigits(magA), db=toDigits(magB);
+    let digits, carry_out=0, carryEvents=0;
+    let resultNeg=false;
+    if(!negA&&!negB){
+      const r=addDigits(da,db);
+      digits=r.digits;carry_out=r.carryOut;carryEvents=r.carryEvents;
+    } else if(negA&&negB){
+      const r=addDigits(da,db);
+      digits=r.digits;carry_out=r.carryOut;carryEvents=r.carryEvents;resultNeg=true;
+    } else {
+      const cmp=compareDigits(da,db);
+      if(cmp===0){digits=[0];}
+      else if(cmp>0){
+        const larger=da,smaller=db;
+        const r=subDigits(larger,smaller);digits=r.digits;
+        resultNeg=negA;
+      } else {
+        const larger=db,smaller=da;
+        const r=subDigits(larger,smaller);digits=r.digits;
+        resultNeg=negB;
+      }
+    }
+    return{digits,carryOut:carry_out,carryEvents,negative:resultNeg};
+  }
+
+  // LAW_CARRY_WORK_001 (standalone): count base-4 carry events when adding a+b
+  function countBase4Carries(a,b) {
+    a=Math.abs(Math.round(a));b=Math.abs(Math.round(b));
+    let count=0,carry=0;
+    while(a>0||b>0||carry>0){
+      const s=(a%4)+(b%4)+carry;
+      if(s>=4){count++;carry=1;}else{carry=0;}
+      a=Math.floor(a/4);b=Math.floor(b/4);
     }
     return count;
-  };
+  }
 
-  return { toDigits, fromDigits, addDigits, subDigits, mulDigits, divmodDigits, signedAdd, countBase4Carries };
+  return{toDigits,fromDigits,compareDigits,addDigits,subDigits,mulDigits,divmodDigits,signedAdd,countBase4Carries,mulDigitsByInt};
 })();
 
 // =============================================================================
-// SHADOW REGISTER
+// SHADOW REGISTER — Golay-backed register with shadow monitoring
+// (LAW_SHADOW_PROCESSOR_001 / LAW_CARRY_WORK_001)
 // =============================================================================
 class ShadowRegister {
-  constructor() {
-    this._digits = [0];
-    this._value = 0;
-    this.shadow_active = false;
-    this.carry_work = 0;
+  constructor(mode='SV') {
+    this.mode=mode;
+    this._digits=[0];      // base-12 digit array (unsigned magnitude)
+    this._value=0;         // reconstructed unsigned magnitude
+    this.shadow_active=false;
+    this.carry_work=0;
   }
+
+  // Standard write: integer → base-12 digits → cells
+  // carry_work += Σ |new_digit[i] - old_digit[i]|  (perturbation step count)
   write(n) {
-    const mag = Math.abs(Math.round(n));
-    const newDigits = SubstrateALU.toDigits(mag);
-    let delta = 0;
-    const maxLen = Math.max(newDigits.length, this._digits.length);
-    for(let i = 0; i < maxLen; i++){
-      delta += Math.abs((newDigits[i] || 0) - (this._digits[i] || 0));
+    const mag=Math.abs(Math.round(n));
+    const newDigits=SubstrateALU.toDigits(mag);
+    const oldDigits=this._digits;
+    let delta=0;
+    const maxLen=Math.max(newDigits.length,oldDigits.length);
+    for(let i=0;i<maxLen;i++){
+      const nd=i<newDigits.length?newDigits[i]:0;
+      const od=i<oldDigits.length?oldDigits[i]:0;
+      delta+=Math.abs(nd-od);
     }
-    this._digits = newDigits;
-    this._value = mag;
-    this.carry_work += delta;
-    this.shadow_active = newDigits.some(d => d > 4);
+    this._digits=newDigits;
+    this._value=mag;
+    this.carry_work+=delta;
+    this.shadow_active=newDigits.some(d=>d>4);
+    return this;
   }
-  write_from_alu(digits, carry_events) {
-    this._digits = [...digits];
-    this._value = SubstrateALU.fromDigits(digits);
-    this.carry_work += carry_events;
-    this.shadow_active = digits.some(d => d > 4);
+
+  // ALU write: digit list directly to cells (no re-decomposition)
+  // carry_work += carry_events (base-12 ALU carry count)
+  write_from_alu(digits,carry_events) {
+    this._digits=[...digits];
+    while(this._digits.length>1&&this._digits[this._digits.length-1]===0) this._digits.pop();
+    this._value=SubstrateALU.fromDigits(this._digits);
+    this.carry_work+=carry_events;
+    this.shadow_active=this._digits.some(d=>d>4);
+    return this;
   }
-  read() { return this._value; }
-  digits() { return [...this._digits]; }
-  reset() { this._digits = [0]; this._value = 0; this.shadow_active = false; this.carry_work = 0; }
+
+  read(){return this._value;}
+  digits(){return [...this._digits];}
+
+  shadow_fingerprint() {
+    const shadow_cell_indices=[];
+    const shadow_digits=[];
+    this._digits.forEach((d,i)=>{if(d>4){shadow_cell_indices.push(i);shadow_digits.push(d);}});
+    return{
+      shadow_active:this.shadow_active,
+      shadow_cell_count:shadow_cell_indices.length,
+      shadow_cell_indices,
+      shadow_digits,
+      carry_work:this.carry_work,
+      phenomenal_limit:4,
+      law:'LAW_SHADOW_PROCESSOR_001 / LAW_CARRY_WORK_001',
+    };
+  }
+
+  reset(){
+    this._digits=[0];this._value=0;
+    this.shadow_active=false;this.carry_work=0;
+  }
 }
 
+// =============================================================================
+// PLAIN REGISTER — lightweight container for substrate_mode=false
+// =============================================================================
 class PlainRegister {
-  constructor() { this._value = 0; }
-  write(n) { this._value = Math.abs(Math.round(n)); }
-  write_from_alu(digits) { this._value = SubstrateALU.fromDigits(digits); }
-  read() { return this._value; }
-  digits() { return SubstrateALU.toDigits(this._value); }
-  reset() { this._value = 0; }
+  constructor(){this._value=0;}
+  write(n){this._value=Math.abs(Math.round(n));return this;}
+  write_from_alu(digits,_ce){this._value=SubstrateALU.fromDigits(digits);return this;}
+  read(){return this._value;}
+  digits(){return SubstrateALU.toDigits(this._value);}
+  get shadow_active(){return false;}
+  get carry_work(){return 0;}
+  shadow_fingerprint(){return{shadow_active:false,shadow_cell_count:0,shadow_cell_indices:[],shadow_digits:[],carry_work:0,phenomenal_limit:4,law:'N/A'};}
+  reset(){this._value=0;}
 }
 
 // =============================================================================
-// VM & ASSEMBLER
+// CONSOLE DEVICE
 // =============================================================================
-// (Full implementation based on analysis)
-const OPCODES = {
-  LOAD:0x01,MOV:0x02,ADD:0x03,SUB:0x04,AND:0x05,OR:0x06,XOR:0x07,NOT:0x08,
-  LSL:0x09,LSR:0x0A,MUL:0x0B,DIV:0x0C,MOD:0x0D,CMP:0x0E,HALT:0x0F,
-  JMP:0x10,JZ:0x11,JNZ:0x12,JN:0x13,JNN:0x14,JC:0x15,JE:0x16,JNE:0x17,
-  JG:0x18,JL:0x19,JGE:0x1A,JLE:0x1B,
-  ADDI:0x20,SUBI:0x21,MULI:0x22,ANDI:0x23,ORI:0x24,CMPI:0x25,
-  STORE:0x30,LOAD_MEM:0x31,STOREI:0x32,LOADI:0x33,STOREX:0x34,LOADX:0x35,
-  PUSH:0x40,POP:0x41,CALL:0x42,RET:0x43,
-  SYSCALL:0x50,NOP:0x51,CLRS:0x52
-};
+class ConsoleDevice {
+  constructor(){this._output='';this.input_queue=[];}
+  print(s){this._output+=s;}
+  output(){return this._output;}
+  clear(){this._output='';}
+  read_int(){return this.input_queue.length?this.input_queue.shift():0;}
+  reset(){this._output='';this.input_queue=[];}
+}
 
-const FORMS = {
-  0x01:'R,I',0x02:'R,R',0x03:'R,R,R',0x04:'R,R,R',0x05:'R,R,R',0x06:'R,R,R',
-  0x07:'R,R,R',0x08:'R,R',0x09:'R,R,I',0x0A:'R,R,I',0x0B:'R,R,R',0x0C:'R,R,R',
-  0x0D:'R,R,R',0x0E:'R,R',0x0F:'',
-  0x10:'A',0x11:'A',0x12:'A',0x13:'A',0x14:'A',0x15:'A',0x16:'A',0x17:'A',
-  0x18:'A',0x19:'A',0x1A:'A',0x1B:'A',
-  0x20:'R,R,I',0x21:'R,R,I',0x22:'R,R,I',0x23:'R,R,I',0x24:'R,R,I',0x25:'R,I',
-  0x30:'R,A',0x31:'R,A',0x32:'R,R',0x33:'R,R',0x34:'R,R,I',0x35:'R,R,I',
-  0x40:'R',0x41:'R',0x42:'A',0x43:'',
-  0x50:'I',0x51:'',0x52:''
-};
+// =============================================================================
+// ASSEMBLER — two-pass .nca assembler
+// =============================================================================
+const Assembler = (() => {
 
+  const OPCODES={
+    LOAD:0x01,MOV:0x02,ADD:0x03,SUB:0x04,AND:0x05,OR:0x06,XOR:0x07,NOT:0x08,
+    LSL:0x09,LSR:0x0A,MUL:0x0B,DIV:0x0C,MOD:0x0D,CMP:0x0E,HALT:0x0F,
+    JMP:0x10,JZ:0x11,JNZ:0x12,JN:0x13,JNN:0x14,JC:0x15,JE:0x16,JNE:0x17,
+    JG:0x18,JL:0x19,JGE:0x1A,JLE:0x1B,
+    ADDI:0x20,SUBI:0x21,MULI:0x22,ANDI:0x23,ORI:0x24,CMPI:0x25,
+    STORE:0x30,LOAD_MEM:0x31,STOREI:0x32,LOADI:0x33,STOREX:0x34,LOADX:0x35,
+    PUSH:0x40,POP:0x41,CALL:0x42,RET:0x43,
+    SYSCALL:0x50,NOP:0x51,CLRS:0x52,
+  };
+
+  // Instruction operand patterns
+  const FORMS={
+    0x01:'R,I',0x02:'R,R',0x03:'R,R,R',0x04:'R,R,R',0x05:'R,R,R',0x06:'R,R,R',
+    0x07:'R,R,R',0x08:'R,R',0x09:'R,R,I',0x0A:'R,R,I',0x0B:'R,R,R',0x0C:'R,R,R',
+    0x0D:'R,R,R',0x0E:'R,R',0x0F:'',
+    0x10:'A',0x11:'A',0x12:'A',0x13:'A',0x14:'A',0x15:'A',0x16:'A',0x17:'A',
+    0x18:'A',0x19:'A',0x1A:'A',0x1B:'A',
+    0x20:'R,R,I',0x21:'R,R,I',0x22:'R,R,I',0x23:'R,R,I',0x24:'R,R,I',0x25:'R,I',
+    0x30:'R,A',0x31:'R,A',0x32:'R,R',0x33:'R,R',0x34:'R,R,I',0x35:'R,R,I',
+    0x40:'R',0x41:'R',0x42:'A',0x43:'',
+    0x50:'I',0x51:'',0x52:'',
+  };
+
+  // Tokenize a line into tokens (strips comments)
+  function tokenizeLine(line) {
+    line=line.replace(/;.*$/,'').trim();
+    if(!line) return[];
+    // Split on whitespace and commas, preserving char literals
+    const tokens=[];
+    let i=0;
+    while(i<line.length){
+      if(line[i]===' '||line[i]==='\t'||line[i]===','){i++;continue;}
+      if(line[i]==="'"){
+        // char literal
+        let j=i+1;
+        while(j<line.length&&line[j]!=="'") j++;
+        tokens.push(line.slice(i,j+1));
+        i=j+1;
+      } else {
+        let j=i;
+        while(j<line.length&&line[j]!==' '&&line[j]!=='\t'&&line[j]!==',') j++;
+        tokens.push(line.slice(i,j));
+        i=j;
+      }
+    }
+    return tokens;
+  }
+
+  function parseImm(tok,constants) {
+    if(tok===undefined) throw new Error('Expected immediate');
+    if(tok.startsWith('#')) tok=tok.slice(1);
+    if(tok.startsWith("'")&&tok.endsWith("'")){ // char literal
+      const ch=tok.slice(1,-1);
+      if(ch.startsWith('\\n')) return 10;
+      if(ch.startsWith('\\t')) return 9;
+      if(ch.startsWith('\\0')) return 0;
+      return ch.codePointAt(0);
+    }
+    if(tok in constants) return constants[tok];
+    if(tok.startsWith('0x')||tok.startsWith('0X')) return parseInt(tok,16);
+    if(tok.startsWith('0b')||tok.startsWith('0B')) return parseInt(tok.slice(2),2);
+    const n=parseInt(tok,10);
+    if(isNaN(n)) throw new Error(`Cannot parse immediate: ${tok}`);
+    return n;
+  }
+
+  function parseReg(tok) {
+    if(!tok) throw new Error('Expected register');
+    const m=tok.match(/^[Rr](\d)$/);
+    if(!m) throw new Error(`Not a register: ${tok}`);
+    const r=parseInt(m[1]);
+    if(r<0||r>7) throw new Error(`Register out of range: R${r}`);
+    return r;
+  }
+
+  function parseCharImm(tok) {
+    if(tok&&tok.startsWith("'")&&tok.endsWith("'")) return tok.slice(1,-1).codePointAt(0);
+    return null;
+  }
+
+  function assemble(source) {
+    const lines=source.split('\n');
+    const constants={};  // .equ definitions
+    const labels={};     // label → instruction index
+    const dataLayout={}; // name → {startAddr, values}
+    const memInit={};    // addr → value
+    const instructions=[];// list of [opcode, ...operands]
+
+    let dataOrigin=0;
+    let dataPtr=0;
+
+    // ── PASS 1: gather labels, .equ, .data ──
+    let instrIdx=0;
+    for(let ln=0;ln<lines.length;ln++){
+      let line=lines[ln].replace(/;.*$/,'').trim();
+      if(!line) continue;
+
+      // .equ
+      if(line.startsWith('.equ')){
+        const parts=line.split(/\s+/);
+        if(parts.length<3) throw new Error(`Line ${ln+1}: .equ needs NAME VALUE`);
+        let val=parseImm(parts[2],constants);
+        constants[parts[1]]=val;
+        continue;
+      }
+      // .org
+      if(line.startsWith('.org')){
+        const parts=line.split(/\s+/);
+        dataPtr=parseInt(parts[1],10);
+        dataOrigin=dataPtr;
+        continue;
+      }
+      // .data
+      if(line.startsWith('.data')){
+        const parts=tokenizeLine(line);
+        // .data NAME val val ...
+        const name=parts[1];
+        const startAddr=dataPtr;
+        const values=[];
+        for(let k=2;k<parts.length;k++){
+          let v;
+          if(parts[k].startsWith("'")&&parts[k].endsWith("'")) v=parts[k].slice(1,-1).codePointAt(0);
+          else v=parseImm(parts[k],constants);
+          values.push(v);
+          memInit[dataPtr]=v;
+          dataPtr++;
+        }
+        dataLayout[name]={startAddr,values};
+        constants[name]=startAddr; // name resolves to base address
+        continue;
+      }
+
+      // labels: may appear on same line as instruction
+      let rest=line;
+      while(rest.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*/)){
+        const m=rest.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*/);
+        labels[m[1]]=instrIdx;
+        rest=rest.slice(m[0].length);
+      }
+      if(!rest.trim()) continue;
+
+      // count instruction
+      const toks=tokenizeLine(rest);
+      if(toks.length===0) continue;
+      const mnem=toks[0].toUpperCase();
+      if(!(mnem in OPCODES)) throw new Error(`Line ${ln+1}: Unknown mnemonic: ${toks[0]}`);
+      instrIdx++;
+    }
+
+    // ── PASS 2: emit instructions ──
+    instrIdx=0;
+    for(let ln=0;ln<lines.length;ln++){
+      let line=lines[ln].replace(/;.*$/,'').trim();
+      if(!line) continue;
+      if(line.startsWith('.')){
+        // directives already handled
+        continue;
+      }
+
+      // strip labels
+      while(line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*/)){
+        const m=line.match(/^([A-Za-z_][A-Za-z0-9_]*):\s*/);
+        line=line.slice(m[0].length);
+      }
+      if(!line.trim()) continue;
+
+      const toks=tokenizeLine(line);
+      if(toks.length===0) continue;
+      const mnem=toks[0].toUpperCase();
+      if(!(mnem in OPCODES)) continue;
+      const op=OPCODES[mnem];
+      const form=FORMS[op];
+
+      // Resolve address operand (label or integer)
+      function resolveAddr(tok){
+        if(tok in labels) return labels[tok];
+        if(tok in constants) return constants[tok];
+        if(tok.startsWith('0x')) return parseInt(tok,16);
+        const n=parseInt(tok,10);
+        if(isNaN(n)) throw new Error(`Line ${ln+1}: Unknown label/address: ${tok}`);
+        return n;
+      }
+
+      let instr;
+      try{
+        switch(form){
+          case '': instr=[op]; break;
+          case 'R': instr=[op,parseReg(toks[1])]; break;
+          case 'A': instr=[op,resolveAddr(toks[1])]; break;
+          case 'I': instr=[op,parseImm(toks[1],constants)]; break;
+          case 'R,R': instr=[op,parseReg(toks[1]),parseReg(toks[2])]; break;
+          case 'R,I': instr=[op,parseReg(toks[1]),parseImm(toks[2],constants)]; break;
+          case 'R,A': instr=[op,parseReg(toks[1]),resolveAddr(toks[2])]; break;
+          case 'R,R,R': instr=[op,parseReg(toks[1]),parseReg(toks[2]),parseReg(toks[3])]; break;
+          case 'R,R,I': instr=[op,parseReg(toks[1]),parseReg(toks[2]),parseImm(toks[3],constants)]; break;
+          default: throw new Error(`Unknown form: ${form}`);
+        }
+      }catch(e){throw new Error(`Line ${ln+1}: ${e.message}`);}
+      instructions.push(instr);
+      instrIdx++;
+    }
+
+    return{instructions,labels,constants,dataLayout,memInit};
+  }
+
+  // Disassemble instruction tuple to string
+  function disassembleInstr(instr,labels={}) {
+    const[op,...ops]=instr;
+    const mnem=Object.entries(OPCODES).find(([k,v])=>v===op)?.[0]||`0x${op.toString(16)}`;
+    const form=FORMS[op]||'';
+    const revLabels=Object.fromEntries(Object.entries(labels).map(([k,v])=>[v,k]));
+    function fmtOp(x,type){
+      if(type==='R') return `R${x}`;
+      if(type==='A') return revLabels[x]?`${revLabels[x]}(${x})`:String(x);
+      if(type==='I') return `#${x}`;
+      return String(x);
+    }
+    const parts=form.split(',').filter(Boolean);
+    const operands=parts.map((t,i)=>fmtOp(ops[i],t)).join(', ');
+    return`${mnem}${operands?' '+operands:''}`;
+  }
+
+  return{assemble,disassembleInstr,OPCODES};
+})();
+
+// =============================================================================
+// CPU — 46-instruction ISA with full flag register {Z N C V S}
+// =============================================================================
 class CPU {
-  constructor(opts={}) {
-    this.substrate_mode = opts.substrate_mode || false;
-    this.memory_size = opts.memory_size || 256;
-    this.registers = Array.from({length:8}, () => this.substrate_mode ? new ShadowRegister() : new PlainRegister());
-    this.memory = Array.from({length:this.memory_size}, () => new PlainRegister());
-    this.pc = 0;
-    this.flags = {Z:0, N:0, C:0, V:0, S:0};
-    this._signs = new Array(8).fill(false);
-    this.halted = false;
-    this.cycles = 0;
-    this.call_stack = [];
-    this.registers[7].write(this.memory_size - 1);
-    this.input_queue = [];
-    this.on_output = null;
-    this.on_input_request = null;
+  constructor({substrate_mode=false,word_bits=16,memory_size=256,trace=false,max_cycles=1000000}={}) {
+    this.substrate_mode=substrate_mode;
+    this.word_bits=word_bits;
+    this.word_max=(1<<word_bits)-1;
+    this.word_sign=1<<(word_bits-1);
+    this.memory_size=memory_size;
+    this.trace_enabled=trace;
+    this.max_cycles=max_cycles;
+
+    this.console=new ConsoleDevice();
+    this.call_stack=[];
+    this.trace=[];
+
+    this._init_registers();
+    this._init_memory();
+    this.pc=0;
+    this.halted=false;
+    this.cycles=0;
+    this.flags={Z:0,N:0,C:0,V:0,S:0};
+    this._signs=new Array(8).fill(false); // sign bits for registers
+    this._exit_code=0;
   }
 
-  _read_reg(i) { return this._signs[i] ? -this.registers[i].read() : this.registers[i].read(); }
-  _write_reg(i, v) {
-    this._signs[i] = v < 0;
-    this.registers[i].write(Math.abs(v));
-    if(this.substrate_mode && this.registers[i].shadow_active) this.flags.S = 1;
-  }
-  _write_reg_alu(i, digits, ce, neg) {
-    this._signs[i] = neg;
-    this.registers[i].write_from_alu(digits, ce);
-    if(this.substrate_mode && this.registers[i].shadow_active) this.flags.S = 1;
+  _init_registers() {
+    const Reg=this.substrate_mode?ShadowRegister:PlainRegister;
+    this.registers=[];
+    for(let i=0;i<8;i++) this.registers.push(new Reg());
+    // R7 is SP, initialised to memory_size-1
+    this.registers[7].write(this.memory_size-1);
   }
 
-  _set_ZN(v) { this.flags.Z = v === 0 ? 1 : 0; this.flags.N = v < 0 ? 1 : 0; }
+  _init_memory() {
+    const Reg=PlainRegister; // memory uses plain registers always
+    this.memory=[];
+    for(let i=0;i<this.memory_size;i++) this.memory.push(new Reg());
+  }
 
+  // Read signed integer from register i
+  _read_reg(i) {
+    const mag=this.registers[i].read();
+    return this._signs[i]?-mag:mag;
+  }
+
+  // Write signed integer to register i; updates S flag if shadow_active
+  _write_reg(i,value) {
+    const neg=value<0;
+    const mag=Math.abs(value);
+    this._signs[i]=neg;
+    this.registers[i].write(mag);
+    if(this.substrate_mode&&this.registers[i].shadow_active) this.flags.S=1;
+  }
+
+  // Write from ALU result directly (digit list + carry events)
+  _write_reg_alu(i,digits,carry_events,neg) {
+    this._signs[i]=neg;
+    this.registers[i].write_from_alu(digits,carry_events);
+    if(this.substrate_mode&&this.registers[i].shadow_active) this.flags.S=1;
+  }
+
+  _read_mem(addr) {
+    if(addr<0||addr>=this.memory_size) throw new Error(`Memory out of bounds: ${addr}`);
+    const r=this.memory[addr].read();
+    return r; // memory is always unsigned; sign not tracked for memory cells
+  }
+  _write_mem(addr,value) {
+    if(addr<0||addr>=this.memory_size) throw new Error(`Memory out of bounds: ${addr}`);
+    this.memory[addr].write(Math.abs(value));
+  }
+
+  // Wrap value to word range (signed)
+  _to_signed(n) {
+    n=n%(this.word_max+1);
+    if(n<0) n+=this.word_max+1;
+    if(n>=this.word_sign) n-=(this.word_max+1);
+    return n;
+  }
+
+  // Update Z and N flags based on signed result
+  _set_ZN(result) {
+    this.flags.Z=result===0?1:0;
+    this.flags.N=result<0?1:0;
+  }
+
+  // Update C and V flags for ADD
+  _set_CV_add(a,b,result_signed) {
+    const ua=(a+this.word_max+1)%(this.word_max+1);
+    const ub=(b+this.word_max+1)%(this.word_max+1);
+    const usum=ua+ub;
+    this.flags.C=usum>this.word_max?1:0;
+    // Overflow: same sign inputs, different sign output
+    this.flags.V=(((a^b)&this.word_sign)===0&&((a^result_signed)&this.word_sign)!==0)?1:0;
+  }
+
+  // Update C and V flags for SUB (a-b)
+  _set_CV_sub(a,b,result_signed) {
+    this.flags.C=a<b?1:0;
+    this.flags.V=(((a^b)&this.word_sign)!==0&&((a^result_signed)&this.word_sign)!==0)?1:0;
+  }
+
+  // ── SubstrateALU dispatch ──
+  _sau_add(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    if(this.substrate_mode){
+      const r=SubstrateALU.signedAdd(Math.abs(a),a<0,Math.abs(b),b<0);
+      const val=r.negative?-SubstrateALU.fromDigits(r.digits):SubstrateALU.fromDigits(r.digits);
+      const sv=this._to_signed(val);
+      this._write_reg_alu(idst,r.digits,r.carryEvents,r.negative);
+      this._set_ZN(sv);
+      this._set_CV_add(a,b,sv);
+    } else {
+      const sv=this._to_signed(a+b);
+      this._write_reg(idst,sv);
+      this._set_ZN(sv);
+      this._set_CV_add(a,b,sv);
+    }
+  }
+
+  _sau_sub(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    const raw=a-b;
+    if(this.substrate_mode){
+      const r=SubstrateALU.signedAdd(Math.abs(a),a<0,Math.abs(b),!b<0); // a + (-b)
+      // Actually implement as direct subtraction
+      const sv=this._to_signed(raw);
+      const digits=SubstrateALU.toDigits(Math.abs(sv));
+      this._write_reg_alu(idst,digits,0,sv<0);
+      this._set_ZN(sv);
+      this._set_CV_sub(a,b,sv);
+    } else {
+      const sv=this._to_signed(raw);
+      this._write_reg(idst,sv);
+      this._set_ZN(sv);
+      this._set_CV_sub(a,b,sv);
+    }
+  }
+
+  _sau_sub_proper(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    const sv=this._to_signed(a-b);
+    if(this.substrate_mode){
+      // Subtract magnitudes appropriately
+      const negA=a<0,negB=b<0;
+      // a - b = a + (-b)
+      const r=SubstrateALU.signedAdd(Math.abs(a),negA,Math.abs(b),!negB);
+      const mag=SubstrateALU.fromDigits(r.digits);
+      const da=SubstrateALU.toDigits(Math.abs(sv));
+      this._write_reg_alu(idst,da,r.carryEvents,sv<0);
+    } else {
+      this._write_reg(idst,sv);
+    }
+    this._set_ZN(sv);
+    this._set_CV_sub(a,b,sv);
+  }
+
+  _sau_mul(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    const resultSign=(a<0)!==(b<0);
+    const magA=Math.abs(a), magB=Math.abs(b);
+    let result,digits,ce=0;
+    if(this.substrate_mode){
+      const da=SubstrateALU.toDigits(magA), db=SubstrateALU.toDigits(magB);
+      digits=SubstrateALU.mulDigits(da,db);
+      result=SubstrateALU.fromDigits(digits);
+    } else {
+      result=magA*magB;
+      digits=SubstrateALU.toDigits(result);
+    }
+    const signed=(resultSign&&result!==0)?-result:result;
+    const sv=this._to_signed(signed);
+    const fd=SubstrateALU.toDigits(Math.abs(sv));
+    if(this.substrate_mode) this._write_reg_alu(idst,fd,ce,sv<0);
+    else this._write_reg(idst,sv);
+    this._set_ZN(sv);
+  }
+
+  _sau_div(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    if(b===0) throw new Error('ZeroDivisionError: DIV by zero');
+    const resultSign=(a<0)!==(b<0);
+    const magA=Math.abs(a), magB=Math.abs(b);
+    let q;
+    if(this.substrate_mode){
+      const da=SubstrateALU.toDigits(magA), db=SubstrateALU.toDigits(magB);
+      const r=SubstrateALU.divmodDigits(da,db);
+      q=SubstrateALU.fromDigits(r.quotient);
+    } else {
+      q=Math.trunc(magA/magB);
+    }
+    const qSigned=(resultSign&&q!==0)?-q:q;
+    const sv=this._to_signed(qSigned);
+    const fd=SubstrateALU.toDigits(Math.abs(sv));
+    if(this.substrate_mode) this._write_reg_alu(idst,fd,0,sv<0);
+    else this._write_reg(idst,sv);
+    this._set_ZN(sv);
+  }
+
+  _sau_mod(idst,is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    if(b===0) throw new Error('ZeroDivisionError: MOD by zero');
+    const magA=Math.abs(a), magB=Math.abs(b);
+    let r;
+    if(this.substrate_mode){
+      const da=SubstrateALU.toDigits(magA), db=SubstrateALU.toDigits(magB);
+      const res=SubstrateALU.divmodDigits(da,db);
+      r=SubstrateALU.fromDigits(res.remainder);
+    } else {
+      r=magA%magB;
+    }
+    // Sign follows dividend
+    const rSigned=(a<0&&r!==0)?-r:r;
+    const sv=this._to_signed(rSigned);
+    const fd=SubstrateALU.toDigits(Math.abs(sv));
+    if(this.substrate_mode) this._write_reg_alu(idst,fd,0,sv<0);
+    else this._write_reg(idst,sv);
+    this._set_ZN(sv);
+  }
+
+  _sau_cmp(is1,is2) {
+    const a=this._read_reg(is1), b=this._read_reg(is2);
+    const diff=a-b;
+    const sv=this._to_signed(diff);
+    this._set_ZN(sv);
+    this._set_CV_sub(a,b,sv);
+  }
+
+  // Bitwise: read magnitude, apply op, write back via digit path (LAW_004)
+  _bitwise(idst,is1,is2,op) {
+    const a=Math.abs(this._read_reg(is1));
+    const b=Math.abs(this._read_reg(is2));
+    let result;
+    switch(op){
+      case 'AND': result=a&b; break;
+      case 'OR':  result=a|b; break;
+      case 'XOR': result=a^b; break;
+    }
+    result>>>=0;
+    const digits=SubstrateALU.toDigits(result);
+    if(this.substrate_mode) this._write_reg_alu(idst,digits,0,false);
+    else this._write_reg(idst,result);
+    this._set_ZN(result);
+  }
+
+  // ── instruction dispatch ──
   execute(instr) {
-    const [op, ...args] = instr;
-    switch(op) {
-      case 0x01: this._write_reg(args[0], args[1]); this._set_ZN(this._read_reg(args[0])); break;
-      case 0x02: this._write_reg(args[0], this._read_reg(args[1])); this._set_ZN(this._read_reg(args[0])); break;
-      case 0x03: {
-        const a = this._read_reg(args[1]), b = this._read_reg(args[2]);
-        const res = a + b;
-        if(this.substrate_mode) {
-          const r = SubstrateALU.signedAdd(Math.abs(a), a<0, Math.abs(b), b<0);
-          this._write_reg_alu(args[0], r.digits, r.carryEvents, r.negative);
-        } else this._write_reg(args[0], res);
-        this._set_ZN(res);
+    const[op,...args]=instr;
+    switch(op){
+
+      // 0x01 LOAD R, #imm
+      case 0x01: {
+        const[rd,imm]=args;
+        this._write_reg(rd,imm);
+        const sv=this._to_signed(imm);
+        this._set_ZN(sv);
       } break;
-      case 0x04: {
-        const a = this._read_reg(args[1]), b = this._read_reg(args[2]);
-        const res = a - b;
-        if(this.substrate_mode) {
-          const r = SubstrateALU.signedAdd(Math.abs(a), a<0, Math.abs(b), b>=0); // sub is add with -b
-          this._write_reg_alu(args[0], r.digits, r.carryEvents, r.negative);
-        } else this._write_reg(args[0], res);
-        this._set_ZN(res);
+
+      // 0x02 MOV R, R
+      case 0x02: {
+        const[rd,rs]=args;
+        const v=this._read_reg(rs);
+        this._write_reg(rd,v);
+        this._set_ZN(v);
       } break;
-      case 0x0B: {
-        const a = this._read_reg(args[1]), b = this._read_reg(args[2]);
-        const res = a * b;
-        if(this.substrate_mode) {
-          const da = SubstrateALU.toDigits(Math.abs(a)), db = SubstrateALU.toDigits(Math.abs(b));
-          const dr = SubstrateALU.mulDigits(da, db);
-          this._write_reg_alu(args[0], dr, 0, (a<0)!==(b<0));
-        } else this._write_reg(args[0], res);
-        this._set_ZN(res);
+
+      // 0x03 ADD R, R, R
+      case 0x03: this._sau_add(args[0],args[1],args[2]); break;
+
+      // 0x04 SUB R, R, R
+      case 0x04: this._sau_sub_proper(args[0],args[1],args[2]); break;
+
+      // 0x05 AND R, R, R
+      case 0x05: this._bitwise(args[0],args[1],args[2],'AND'); break;
+
+      // 0x06 OR R, R, R
+      case 0x06: this._bitwise(args[0],args[1],args[2],'OR'); break;
+
+      // 0x07 XOR R, R, R
+      case 0x07: this._bitwise(args[0],args[1],args[2],'XOR'); break;
+
+      // 0x08 NOT R, R
+      case 0x08: {
+        const[rd,rs]=args;
+        const a=Math.abs(this._read_reg(rs));
+        const result=(~a)&this.word_max;
+        const digits=SubstrateALU.toDigits(result);
+        if(this.substrate_mode) this._write_reg_alu(rd,digits,0,false);
+        else this._write_reg(rd,result);
+        this._set_ZN(result);
       } break;
-      case 0x0F: this.halted = true; break;
-      case 0x10: this.pc = args[0]; return;
-      case 0x11: if(this.flags.Z) { this.pc = args[0]; return; } break;
-      case 0x12: if(!this.flags.Z) { this.pc = args[0]; return; } break;
-      case 0x42: this.call_stack.push(this.pc + 1); this.pc = args[0]; return;
-      case 0x43: if(this.call_stack.length) this.pc = this.call_stack.pop(); return;
-      case 0x50: this._syscall(args[0]); break;
-      case 0x52: this.flags.S = 0; break;
-      // ... more opcodes ...
-      default: break;
+
+      // 0x09 LSL R, R, #amt
+      case 0x09: {
+        const[rd,rs,amt]=args;
+        const a=Math.abs(this._read_reg(rs));
+        const result=(a<<amt)&this.word_max;
+        const digits=SubstrateALU.toDigits(result);
+        if(this.substrate_mode) this._write_reg_alu(rd,digits,0,false);
+        else this._write_reg(rd,result);
+        this._set_ZN(result);
+      } break;
+
+      // 0x0A LSR R, R, #amt
+      case 0x0A: {
+        const[rd,rs,amt]=args;
+        const a=Math.abs(this._read_reg(rs));
+        const result=(a>>>amt)&this.word_max;
+        const digits=SubstrateALU.toDigits(result);
+        if(this.substrate_mode) this._write_reg_alu(rd,digits,0,false);
+        else this._write_reg(rd,result);
+        this._set_ZN(result);
+      } break;
+
+      // 0x0B MUL R, R, R
+      case 0x0B: this._sau_mul(args[0],args[1],args[2]); break;
+
+      // 0x0C DIV R, R, R
+      case 0x0C: this._sau_div(args[0],args[1],args[2]); break;
+
+      // 0x0D MOD R, R, R
+      case 0x0D: this._sau_mod(args[0],args[1],args[2]); break;
+
+      // 0x0E CMP R, R
+      case 0x0E: this._sau_cmp(args[0],args[1]); break;
+
+      // 0x0F HALT
+      case 0x0F: this.halted=true; break;
+
+      // ── Control flow 0x10-0x1B ──
+      case 0x10: this.pc=args[0]; return; // JMP (return to skip pc++)
+      case 0x11: if(this.flags.Z){this.pc=args[0];return;} break; // JZ
+      case 0x12: if(!this.flags.Z){this.pc=args[0];return;} break; // JNZ
+      case 0x13: if(this.flags.N){this.pc=args[0];return;} break; // JN
+      case 0x14: if(!this.flags.N){this.pc=args[0];return;} break; // JNN
+      case 0x15: if(this.flags.C){this.pc=args[0];return;} break; // JC
+      case 0x16: if(this.flags.Z){this.pc=args[0];return;} break; // JE
+      case 0x17: if(!this.flags.Z){this.pc=args[0];return;} break; // JNE
+      case 0x18: if(!this.flags.Z&&this.flags.N===this.flags.V){this.pc=args[0];return;} break; // JG
+      case 0x19: if(this.flags.N!==this.flags.V){this.pc=args[0];return;} break; // JL
+      case 0x1A: if(this.flags.N===this.flags.V){this.pc=args[0];return;} break; // JGE
+      case 0x1B: if(this.flags.Z||this.flags.N!==this.flags.V){this.pc=args[0];return;} break; // JLE
+
+      // ── Immediate arithmetic 0x20-0x25 ──
+      case 0x20: { // ADDI R, R, #imm
+        const[rd,rs,imm]=args;
+        const a=this._read_reg(rs);
+        const sv=this._to_signed(a+imm);
+        if(this.substrate_mode){
+          const r=SubstrateALU.signedAdd(Math.abs(a),a<0,Math.abs(imm),imm<0);
+          const fd=SubstrateALU.toDigits(Math.abs(sv));
+          this._write_reg_alu(rd,fd,r.carryEvents,sv<0);
+        } else this._write_reg(rd,sv);
+        this._set_ZN(sv);this._set_CV_add(a,imm,sv);
+      } break;
+
+      case 0x21: { // SUBI R, R, #imm
+        const[rd,rs,imm]=args;
+        const a=this._read_reg(rs);
+        const sv=this._to_signed(a-imm);
+        if(this.substrate_mode){
+          const fd=SubstrateALU.toDigits(Math.abs(sv));
+          this._write_reg_alu(rd,fd,0,sv<0);
+        } else this._write_reg(rd,sv);
+        this._set_ZN(sv);this._set_CV_sub(a,imm,sv);
+      } break;
+
+      case 0x22: { // MULI R, R, #imm
+        const[rd,rs,imm]=args;
+        const a=this._read_reg(rs);
+        const neg=(a<0)!==(imm<0);
+        const magA=Math.abs(a),magI=Math.abs(imm);
+        let result;
+        if(this.substrate_mode){
+          const da=SubstrateALU.toDigits(magA),di=SubstrateALU.toDigits(magI);
+          result=SubstrateALU.fromDigits(SubstrateALU.mulDigits(da,di));
+        } else result=magA*magI;
+        const sv=this._to_signed((neg&&result!==0)?-result:result);
+        const fd=SubstrateALU.toDigits(Math.abs(sv));
+        if(this.substrate_mode) this._write_reg_alu(rd,fd,0,sv<0);
+        else this._write_reg(rd,sv);
+        this._set_ZN(sv);
+      } break;
+
+      case 0x23: { // ANDI R, R, #imm
+        const[rd,rs,imm]=args;
+        const result=Math.abs(this._read_reg(rs))&Math.abs(imm);
+        const digits=SubstrateALU.toDigits(result);
+        if(this.substrate_mode) this._write_reg_alu(rd,digits,0,false);
+        else this._write_reg(rd,result);
+        this._set_ZN(result);
+      } break;
+
+      case 0x24: { // ORI R, R, #imm
+        const[rd,rs,imm]=args;
+        const result=Math.abs(this._read_reg(rs))|Math.abs(imm);
+        const digits=SubstrateALU.toDigits(result);
+        if(this.substrate_mode) this._write_reg_alu(rd,digits,0,false);
+        else this._write_reg(rd,result);
+        this._set_ZN(result);
+      } break;
+
+      case 0x25: { // CMPI R, #imm
+        const[rs,imm]=args;
+        const a=this._read_reg(rs);
+        const sv=this._to_signed(a-imm);
+        this._set_ZN(sv);this._set_CV_sub(a,imm,sv);
+      } break;
+
+      // ── Memory 0x30-0x35 ──
+      case 0x30: { // STORE R, addr
+        const[rs,addr]=args;
+        this._write_mem(addr,this._read_reg(rs));
+      } break;
+
+      case 0x31: { // LOAD_MEM R, addr
+        const[rd,addr]=args;
+        const v=this._read_mem(addr);
+        this._write_reg(rd,v);
+        this._set_ZN(v);
+      } break;
+
+      case 0x32: { // STOREI R, R (indirect)
+        const[rs,rb]=args;
+        const addr=this._read_reg(rb);
+        this._write_mem(addr,this._read_reg(rs));
+      } break;
+
+      case 0x33: { // LOADI R, R (indirect)
+        const[rd,rs]=args;
+        const addr=this._read_reg(rs);
+        const v=this._read_mem(addr);
+        this._write_reg(rd,v);
+        this._set_ZN(v);
+      } break;
+
+      case 0x34: { // STOREX R, R, #offset
+        const[rs,rb,offset]=args;
+        const addr=this._read_reg(rb)+offset;
+        this._write_mem(addr,this._read_reg(rs));
+      } break;
+
+      case 0x35: { // LOADX R, R, #offset
+        const[rd,rb,offset]=args;
+        const addr=this._read_reg(rb)+offset;
+        const v=this._read_mem(addr);
+        this._write_reg(rd,v);
+        this._set_ZN(v);
+      } break;
+
+      // ── Stack & subroutines 0x40-0x43 ──
+      case 0x40: { // PUSH R
+        const sp=this._read_reg(7);
+        this._write_mem(sp,this._read_reg(args[0]));
+        this._write_reg(7,sp-1);
+        if(sp-1<0) throw new Error('StackOverflow: SP went below 0');
+      } break;
+
+      case 0x41: { // POP R
+        const sp=this._read_reg(7)+1;
+        this._write_reg(7,sp);
+        const v=this._read_mem(sp);
+        this._write_reg(args[0],v);
+        this._set_ZN(v);
+      } break;
+
+      case 0x42: // CALL addr
+        this.call_stack.push(this.pc+1);
+        this.pc=args[0];
+        return;
+
+      case 0x43: // RET
+        if(this.call_stack.length===0) throw new Error('RET with empty call stack');
+        this.pc=this.call_stack.pop();
+        return;
+
+      // ── SYSCALL / misc 0x50-0x52 ──
+      case 0x50: { // SYSCALL N
+        const n=args[0];
+        switch(n){
+          case 1: this.console.print(String(this._read_reg(0))); break;
+          case 2: this.console.print(String.fromCodePoint(this._read_reg(0))); break;
+          case 3: {
+            let addr=this._read_reg(0);
+            while(addr<this.memory_size){
+              const ch=this._read_mem(addr);
+              if(ch===0) break;
+              this.console.print(String.fromCodePoint(ch));
+              addr++;
+            }
+          } break;
+          case 4: this._write_reg(0,this.console.read_int()); break;
+          case 5: this.halted=true;this._exit_code=this._read_reg(0); break;
+          case 6: this.console.print('\n'); break;
+          case 7: {
+            let s=`R0=${this._read_reg(0)} R1=${this._read_reg(1)} R2=${this._read_reg(2)} R3=${this._read_reg(3)} R4=${this._read_reg(4)} R5=${this._read_reg(5)} R6=${this._read_reg(6)} R7=${this._read_reg(7)}`;
+            s+=` | Z=${this.flags.Z} N=${this.flags.N} C=${this.flags.C} V=${this.flags.V} S=${this.flags.S} | PC=${this.pc}`;
+            this.console.print(s+'\n');
+          } break;
+          default: throw new Error(`Unknown SYSCALL: ${n}`);
+        }
+      } break;
+
+      case 0x51: break; // NOP
+
+      case 0x52: this.flags.S=0; break; // CLRS
+
+      default: throw new Error(`Unknown opcode: 0x${op.toString(16)}`);
     }
     this.pc++;
   }
 
-  _syscall(n) {
-    switch(n) {
-      case 1: this.on_output?.(this._read_reg(0).toString()); break;
-      case 2: this.on_output?.(String.fromCodePoint(this._read_reg(0))); break;
-      case 3: {
-        let addr = this._read_reg(0);
-        let s = "";
-        while(addr < this.memory_size) {
-          const c = this.memory[addr].read();
-          if(c === 0) break;
-          s += String.fromCodePoint(c);
-          addr++;
-        }
-        this.on_output?.(s);
-      } break;
-      case 4: 
-        if(this.input_queue.length) this._write_reg(0, this.input_queue.shift());
-        else { this.on_input_request?.(); this.halted = true; this._waiting_for_input = true; }
-        break;
-      case 5: this.halted = true; break;
-      case 6: this.on_output?.("\n"); break;
-      case 7: this.on_output?.(`STATE: PC=${this.pc} Z=${this.flags.Z} N=${this.flags.N} S=${this.flags.S}\n`); break;
+  run(instructions,verbose=false) {
+    const startTime=performance.now();
+    this.halted=false;
+    while(!this.halted){
+      if(this.pc<0||this.pc>=instructions.length){
+        if(this.pc===instructions.length) break; // normal end
+        throw new Error(`PC out of range: ${this.pc}`);
+      }
+      const instr=instructions[this.pc];
+      if(this.trace_enabled){
+        this.trace.push({pc:this.pc,instr,flags:{...this.flags},cycle:this.cycles});
+      }
+      this.execute(instr);
+      this.cycles++;
+      if(this.cycles>this.max_cycles) throw new Error(`Exceeded max_cycles: ${this.max_cycles}`);
     }
+    const elapsed=(performance.now()-startTime)/1000;
+    const ips=elapsed>0?Math.round(this.cycles/elapsed):Infinity;
+
+    let trace_hash=null;
+    if(this.trace_enabled&&this.trace.length>0){
+      const s=this.trace.map(t=>`${t.pc}:${JSON.stringify(t.instr)}:${JSON.stringify(t.flags)}`).join('|');
+      trace_hash=SHA256.hash(s);
+    }
+
+    return{
+      cycles:this.cycles,halted:this.halted,exit_code:this._exit_code,
+      output:this.console.output(),elapsed_s:elapsed,ips,
+      flags:{...this.flags},registers:Array.from({length:8},(_,i)=>this._read_reg(i)),
+      shadow_flag:this.flags.S,
+      total_carry_work:this.registers.reduce((a,r)=>a+r.carry_work,0),
+      trace_hash,
+    };
   }
 
-  run(instructions) {
-    while(!this.halted && this.pc < instructions.length) {
-      this.execute(instructions[this.pc]);
-      this.cycles++;
-      if(this.cycles > 1000000) break;
-    }
+  substrate_fingerprint() {
+    if(!this.substrate_mode) return{mode:'plain'};
+    const shadow_registers=[];
+    let total_carry_work=0;
+    this.registers.forEach((r,i)=>{
+      if(r.shadow_active) shadow_registers.push(i);
+      total_carry_work+=r.carry_work;
+    });
+    // magnitude_sha: SHA-256 of magnitudes of R0-R7 and mem[0..31]
+    const parts=[...Array.from({length:8},(_,i)=>this.registers[i].read())];
+    for(let i=0;i<32;i++) parts.push(this.memory[i].read());
+    const mag_str=parts.join(',');
+    const magnitude_sha=SHA256.hash(mag_str).slice(0,16);
+    return{
+      mode:'substrate',
+      nrci_mean:GolayCodeEngine.NRCI,
+      magnitude_sha,
+      shadow_flag:this.flags.S,
+      shadow_registers,
+      total_carry_work,
+    };
+  }
+
+  format_state() {
+    let s='';
+    for(let i=0;i<8;i++) s+=`R${i}=${this._read_reg(i)}${this._signs[i]?'(-)':''} `;
+    s+=`| Z=${this.flags.Z} N=${this.flags.N} C=${this.flags.C} V=${this.flags.V} S=${this.flags.S}`;
+    s+=` | PC=${this.pc} | cycles=${this.cycles}`;
+    return s;
+  }
+
+  reset() {
+    this.registers.forEach(r=>r.reset());
+    this.memory.forEach(m=>m.reset());
+    this.registers[7].write(this.memory_size-1);
+    this._signs.fill(false);
+    this.flags={Z:0,N:0,C:0,V:0,S:0};
+    this.pc=0;this.cycles=0;this.halted=false;this._exit_code=0;
+    this.call_stack=[];this.trace=[];
+    this.console.reset();
   }
 }
+
+// count_base4_carries: standalone utility (LAW_CARRY_WORK_001)
+function count_base4_carries(a,b) {
+  return SubstrateALU.countBase4Carries(a,b);
+}
+
+// =============================================================================
+// EXAMPLE PROGRAMS
+// =============================================================================
+const EXAMPLES = {
+
+hello:`; 01_hello.nca — PRINT_CHAR syscall, char literals
+; Prints "Hello World!" using individual character output.
+    LOAD R0, 'H'
+    SYSCALL 2
+    LOAD R0, 'e'
+    SYSCALL 2
+    LOAD R0, 'l'
+    SYSCALL 2
+    LOAD R0, 'l'
+    SYSCALL 2
+    LOAD R0, 'o'
+    SYSCALL 2
+    LOAD R0, ' '
+    SYSCALL 2
+    LOAD R0, 'W'
+    SYSCALL 2
+    LOAD R0, 'o'
+    SYSCALL 2
+    LOAD R0, 'r'
+    SYSCALL 2
+    LOAD R0, 'l'
+    SYSCALL 2
+    LOAD R0, 'd'
+    SYSCALL 2
+    LOAD R0, '!'
+    SYSCALL 2
+    SYSCALL 6
+    HALT`,
+
+factorial_iter:`; 02_factorial_iter.nca — Iterative factorial
+; Computes 7! = 5040 without recursion.
+; Uses CMPI/JLE loop and MUL (SubstrateALU in substrate mode).
+.equ N 7
+    LOAD R0, #N          ; R0 = counter (n)
+    LOAD R1, #1          ; R1 = accumulator (result)
+loop:
+    CMPI R0, 1
+    JLE done
+    MUL R1, R1, R0       ; result *= n  [SubstrateALU long-mul]
+    SUBI R0, R0, #1      ; n--
+    JMP loop
+done:
+    MOV R0, R1
+    SYSCALL 1            ; print result (5040)
+    SYSCALL 6
+    HALT`,
+
+factorial_recursive:`; 03_factorial_recursive.nca — Recursive factorial
+; Computes 10! = 3628800 using CALL/RET, PUSH/POP, recursion.
+; Demonstrates independent call_stack and data stack.
+    LOAD R0, #10
+    CALL fact
+    SYSCALL 1            ; print result (3628800)
+    SYSCALL 6
+    HALT
+
+fact:
+    CMPI R0, 1
+    JLE fact_base
+    PUSH R0              ; save n
+    SUBI R0, R0, #1      ; n - 1
+    CALL fact            ; R0 = (n-1)!
+    POP R1               ; restore n
+    MUL R0, R0, R1       ; n * (n-1)!  [SubstrateALU]
+    RET
+fact_base:
+    LOAD R0, #1
+    RET`,
+
+bubble_sort:`; 04_bubble_sort.nca — Bubble sort
+; Sorts array [5,3,8,1,9,2,7,4,6] in-place, then prints sorted values.
+; Demonstrates LOADI/STOREI indexed memory access and .data arrays.
+.equ N 9
+.data arr 5 3 8 1 9 2 7 4 6
+
+    LOAD R5, #N          ; R5 = total elements
+outer_loop:
+    SUBI R5, R5, #1      ; decrement outer counter
+    CMPI R5, 0
+    JLE print_arr
+    LOAD R3, arr         ; R3 = base address
+    LOAD R4, #0          ; R4 = index
+
+inner_loop:
+    CMPI R4, R5
+    JGE outer_loop
+    LOADI R0, R3         ; R0 = arr[i]
+    ADDI R6, R3, #1      ; R6 = &arr[i+1]
+    LOADI R1, R6         ; R1 = arr[i+1]
+    CMP R0, R1
+    JLE no_swap
+    STOREI R1, R3        ; arr[i] = R1
+    STOREI R0, R6        ; arr[i+1] = R0
+no_swap:
+    ADDI R3, R3, #1
+    ADDI R4, R4, #1
+    JMP inner_loop
+
+print_arr:
+    LOAD R3, arr
+    LOAD R4, #N
+print_loop:
+    CMPI R4, 0
+    JLE done
+    LOADI R0, R3
+    SYSCALL 1
+    SYSCALL 6
+    ADDI R3, R3, #1
+    SUBI R4, R4, #1
+    JMP print_loop
+done:
+    HALT`,
+
+prime_sieve:`; 05_prime_sieve.nca — Sieve of Eratosthenes
+; Prints primes up to 30. Uses MOD (SubstrateALU Knuth D).
+.equ LIMIT 30
+
+    LOAD R0, #2          ; candidate = 2
+outer:
+    CMPI R0, LIMIT
+    JG done
+    LOAD R1, #2          ; divisor = 2
+    MOV R2, R0           ; save candidate
+    MOV R3, #0           ; is_composite = 0 -- use LOAD instead
+    LOAD R3, #0
+inner:
+    MUL R4, R1, R1       ; R4 = divisor^2
+    CMP R4, R2
+    JG check_prime
+    MOD R4, R2, R1       ; R4 = candidate mod divisor
+    CMPI R4, 0
+    JE mark_composite
+    ADDI R1, R1, #1
+    JMP inner
+mark_composite:
+    LOAD R3, #1
+check_prime:
+    CMPI R3, 0
+    JNE skip_print
+    MOV R0, R2
+    SYSCALL 1
+    SYSCALL 6
+skip_print:
+    MOV R0, R2
+    ADDI R0, R0, #1
+    JMP outer
+done:
+    HALT`,
+
+fibonacci:`; 06_fibonacci.nca — Fibonacci sequence
+; Prints first 10 Fibonacci numbers using PUSH/POP for caller-save.
+; Uses ADD chain (SubstrateALU in substrate mode).
+.equ COUNT 10
+    LOAD R0, #0          ; prev = 0
+    LOAD R1, #1          ; curr = 1
+    LOAD R2, #COUNT      ; loop counter
+loop:
+    CMPI R2, 0
+    JLE done
+    PUSH R1
+    PUSH R2
+    SYSCALL 1            ; print curr (R0 = curr, swap needed)
+    POP R2
+    POP R1
+    ; Actually print prev first
+    PUSH R0
+    PUSH R1
+    PUSH R2
+    MOV R0, R1
+    SYSCALL 1
+    SYSCALL 6
+    POP R2
+    POP R1
+    POP R0
+    ADD R3, R0, R1       ; next = prev + curr  [SubstrateALU]
+    MOV R0, R1
+    MOV R1, R3
+    SUBI R2, R2, #1
+    JMP loop
+done:
+    HALT`,
+
+fibonacci_clean:`; 06_fibonacci.nca — Fibonacci sequence (clean version)
+; Prints first 12 Fibonacci numbers: 0 1 1 2 3 5 8 13 21 34 55 89
+.equ COUNT 12
+    LOAD R0, #0          ; a = 0
+    LOAD R1, #1          ; b = 1
+    LOAD R2, #COUNT      ; counter
+loop:
+    CMPI R2, 0
+    JLE done
+    MOV R6, R0
+    SYSCALL 1            ; print a
+    SYSCALL 6
+    ADD R3, R0, R1       ; temp = a + b  [SubstrateALU]
+    MOV R0, R1           ; a = b
+    MOV R1, R3           ; b = temp
+    SUBI R2, R2, #1
+    JMP loop
+done:
+    HALT`,
+
+gcd:`; 07_gcd.nca — Euclidean GCD via subroutine
+; Computes GCD(54, 18) = 18 using iterative Euclidean algorithm.
+; Uses MOD (SubstrateALU Knuth D).
+.equ A 54
+.equ B 18
+    LOAD R0, #A
+    LOAD R1, #B
+    CALL gcd
+    SYSCALL 1            ; print GCD (18)
+    SYSCALL 6
+    HALT
+
+gcd:
+    CMPI R1, 0
+    JE gcd_done
+    MOD R2, R0, R1       ; r = a mod b  [SubstrateALU]
+    MOV R0, R1           ; a = b
+    MOV R1, R2           ; b = r
+    JMP gcd
+gcd_done:
+    RET`,
+
+string_reverse:`; 08_string_reverse.nca — String traversal and reverse copy
+; Reverses "NOISECORE" using pointer arithmetic and STOREI/LOADI.
+; Demonstrates memory manipulation and PRINT_STR (SYSCALL 3).
+.data src 'N' 'O' 'I' 'S' 'E' 'C' 'O' 'R' 'E' 0
+.org 20
+.data dst 0 0 0 0 0 0 0 0 0 0
+
+; First: find length of src
+    LOAD R0, src         ; R0 = src pointer
+    LOAD R1, #0          ; R1 = length counter
+find_len:
+    LOADI R2, R0
+    CMPI R2, 0
+    JE found_len
+    ADDI R0, R0, #1
+    ADDI R1, R1, #1
+    JMP find_len
+found_len:
+    ; R1 = length of string (9)
+    ; Copy in reverse to dst
+    SUBI R0, R0, #1      ; point to last char of src
+    LOAD R3, dst         ; R3 = dst pointer
+
+copy_loop:
+    CMPI R1, 0
+    JLE write_null
+    LOADI R2, R0         ; read src[i]
+    STOREI R2, R3        ; write to dst
+    SUBI R0, R0, #1      ; src pointer--
+    ADDI R3, R3, #1      ; dst pointer++
+    SUBI R1, R1, #1
+    JMP copy_loop
+
+write_null:
+    LOAD R2, #0
+    STOREI R2, R3        ; null-terminate dst
+    LOAD R0, dst
+    SYSCALL 3            ; PRINT_STR
+    SYSCALL 6
+    HALT`,
+
+shadow_probe:`; 09_shadow_probe.nca — Shadow Regime detection demo
+; Uses CLRS to bracket sections and detect S flag latching.
+; In substrate mode, values > 4 in any base-12 digit cross the
+; Voronoi boundary of the Golay phenomenal regime.
+; Run with SUBSTRATE mode enabled to observe S flag behaviour.
+
+    ; === Section A: all within phenomenal regime (digits 0-4) ===
+    CLRS                 ; clear S before section A
+    LOAD R0, #3
+    LOAD R1, #4
+    ADD R2, R0, R1       ; result=7, digit[0]=7 > 4 → S latches!
+    SYSCALL 7            ; DUMP_REGS: shows S=1 if substrate mode
+    CLRS                 ; reset S for next section
+
+    ; === Section B: crossing shadow boundary ===
+    LOAD R0, #5          ; digit 5 > 4 → S latches immediately
+    SYSCALL 7
+    CLRS
+
+    ; === Section C: carry_work research ===
+    LOAD R0, #1836       ; proton mass (electron mass units)
+    LOAD R1, #1839       ; neutron mass
+    ADD R2, R0, R1       ; binding: proton + neutron
+    SYSCALL 7
+
+    ; === Output: carry work from assembly ===
+    MOV R0, R2
+    SYSCALL 1            ; print 3675
+    SYSCALL 6
+    HALT`,
+
+binding_work:`; 10_binding_work.nca — Nucleon binding work research
+; Demonstrates carry_work accounting for nucleon assembly.
+; In substrate mode, the carry_work accumulator tracks geometric
+; binding cost (LAW_CARRY_WORK_001).
+; Run with SUBSTRATE mode and observe the substrate fingerprint.
+
+.equ PROTON  1836
+.equ NEUTRON 1839
+
+    CLRS                 ; clear shadow sentinel
+
+    ; Deuterium: proton + neutron
+    LOAD R0, #PROTON
+    LOAD R1, #NEUTRON
+    ADD R2, R0, R1       ; R2 = 3675 = D-2 mass
+    SYSCALL 7            ; DUMP_REGS (observe S flag)
+
+    ; Helium-4: 2p + 2n
+    MUL R3, R0, #2       ; 2 * proton  [needs MULI]
+    MUL R4, R1, #2       ; 2 * neutron
+    HALT`,
+
+binding_work_proper:`; 10_binding_work.nca — Nucleon binding work research
+; Uses MULI for scalar multiplication.
+.equ PROTON  1836
+.equ NEUTRON 1839
+
+    CLRS
+    LOAD R0, #PROTON
+    LOAD R1, #NEUTRON
+    ADD R2, R0, R1       ; D-2: p + n
+    MOV R6, R2
+    SYSCALL 1            ; print 3675
+    SYSCALL 6
+
+    MULI R3, R0, #2      ; 2 protons
+    MULI R4, R1, #2      ; 2 neutrons
+    ADD R5, R3, R4       ; He-4 mass
+    MOV R0, R5
+    SYSCALL 1            ; print He-4 mass
+    SYSCALL 6
+    SYSCALL 7
+    HALT`,
+};
+
+// use clean fibonacci version
+EXAMPLES.fibonacci = EXAMPLES.fibonacci_clean;
+EXAMPLES.binding_work = EXAMPLES.binding_work_proper;
+
+// =============================================================================
+// ISA REFERENCE DATA (for ISA tab)
+// =============================================================================
+const ISA_GROUPS = [
+  {label:'ARITHMETIC & LOGIC',rows:[
+    ['LOAD','R, #imm','Z N'],['MOV','R, R','Z N'],['ADD','R, R, R','Z N C V ★'],
+    ['SUB','R, R, R','Z N C V ★'],['AND','R, R, R','Z N ◆'],['OR','R, R, R','Z N ◆'],
+    ['XOR','R, R, R','Z N ◆'],['NOT','R, R','Z N ◆'],['LSL','R, R, #','Z N ◆'],
+    ['LSR','R, R, #','Z N ◆'],['MUL','R, R, R','Z N ★'],['DIV','R, R, R','Z N ★'],
+    ['MOD','R, R, R','Z N ★'],['CMP','R, R','Z N C V ★'],['HALT','','—'],
+  ]},
+  {label:'CONTROL FLOW',rows:[
+    ['JMP','addr','—'],['JZ','addr','—'],['JNZ','addr','—'],['JN','addr','—'],
+    ['JNN','addr','—'],['JC','addr','—'],['JE','addr','—'],['JNE','addr','—'],
+    ['JG','addr','—'],['JL','addr','—'],['JGE','addr','—'],['JLE','addr','—'],
+  ]},
+  {label:'IMMEDIATE ARITHMETIC',rows:[
+    ['ADDI','R, R, #','Z N C V ★'],['SUBI','R, R, #','Z N C V ★'],
+    ['MULI','R, R, #','Z N ★'],['ANDI','R, R, #','Z N ◆'],['ORI','R, R, #','Z N ◆'],
+    ['CMPI','R, #','Z N C V ★'],
+  ]},
+  {label:'MEMORY ACCESS',rows:[
+    ['STORE','R, addr','—'],['LOAD_MEM','R, addr','Z N'],['STOREI','R, R','—'],
+    ['LOADI','R, R','Z N'],['STOREX','R, R, #','—'],['LOADX','R, R, #','Z N'],
+  ]},
+  {label:'STACK & SUBROUTINES',rows:[
+    ['PUSH','R','—'],['POP','R','Z N'],['CALL','addr','—'],['RET','','—'],
+  ]},
+  {label:'SYSCALL & MISC',rows:[
+    ['SYSCALL','N','—'],['NOP','','—'],['CLRS','','clears S'],
+  ]},
+];
+
+const SYSCALL_INFO = [
+  '1 PRINT_INT — print R0 as signed integer',
+  '2 PRINT_CHAR — print R0 as Unicode character',
+  '3 PRINT_STR — print null-terminated string at mem[R0]',
+  '4 READ_INT — read integer from input queue into R0',
+  '5 EXIT — halt, exit code = R0',
+  '6 PRINT_NL — print newline',
+  '7 DUMP_REGS — print full CPU state to console',
+];
 
 // =============================================================================
 // UI CONTROLLER
 // =============================================================================
-let currentMode = 'plain';
-let cpu = null;
-let assembled = null;
+let currentMode='plain';
+let traceEnabled=false;
+let currentCPU=null;
+let currentTab='mem';
 
-function setMode(m) {
-  currentMode = m;
-  document.getElementById('btn-plain').classList.toggle('active', m === 'plain');
-  document.getElementById('btn-substrate').classList.toggle('active', m === 'substrate');
-  document.getElementById('btn-substrate').classList.toggle('sub-active', m === 'substrate');
+function setMode(m){
+  currentMode=m;
+  document.getElementById('btn-plain').classList.toggle('active',m==='plain');
+  document.getElementById('btn-substrate').classList.toggle('active',m==='substrate');
+  document.getElementById('substrate-strip').classList.toggle('visible',m==='substrate');
+  // Update mode button sub-styling
+  document.getElementById('btn-substrate').classList.toggle('sub-active',m==='substrate');
 }
 
-function printTerm(s, cls='') {
-  const out = document.getElementById('terminal-out');
-  const span = document.createElement('span');
-  span.className = cls;
-  span.textContent = s;
-  out.appendChild(span);
-  out.scrollTop = out.scrollHeight;
+function toggleTrace(){
+  traceEnabled=!traceEnabled;
+  document.getElementById('trace-toggle').classList.toggle('on',traceEnabled);
+  const hd=document.getElementById('hash-display');
+  hd.style.display=traceEnabled?'':'none';
 }
 
-function runProgram() {
-  const source = document.getElementById('nca-editor').value;
-  // Simplified assembler call
-  try {
-    // (Actual assembler logic here)
-    printTerm("Assembling...\n", "doc-code");
-    // Mock for now, replace with full Assembler.assemble
-    const mockInstr = [[0x01, 0, 1836], [0x01, 1, 1839], [0x03, 2, 0, 1], [0x02, 0, 2], [0x50, 1], [0x50, 6], [0x0F]];
-    cpu = new CPU({substrate_mode: currentMode === 'substrate'});
-    cpu.on_output = (s) => printTerm(s);
-    cpu.run(mockInstr);
-    updateUI();
-  } catch(e) {
-    printTerm("ERROR: " + e.message + "\n", "red");
-  }
+function loadExample(key){
+  if(!key||!EXAMPLES[key]) return;
+  document.getElementById('nca-editor').value=EXAMPLES[key];
+  document.getElementById('example-select').value='';
+  clearError();
 }
 
-function updateUI() {
-  const grid = document.getElementById('reg-grid');
-  grid.innerHTML = '';
-  for(let i=0; i<8; i++) {
-    const v = cpu._read_reg(i);
-    const reg = cpu.registers[i];
-    const cell = document.createElement('div');
-    cell.className = 'reg-cell' + (reg.shadow_active ? ' shadow' : v !== 0 ? ' active' : '');
-    cell.innerHTML = `
+function clearConsole(){
+  document.getElementById('console-out').innerHTML='';
+}
+
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.mem-tab').forEach((el,i)=>{
+    el.classList.toggle('active',['mem','isa','trace'][i]===tab);
+  });
+  document.getElementById('mem-grid').style.display=tab==='mem'?'':'none';
+  const isa=document.getElementById('isa-content');
+  isa.classList.toggle('visible',tab==='isa');
+  isa.style.display=tab==='isa'?'block':'none';
+  const tr=document.getElementById('trace-content');
+  tr.classList.toggle('visible',tab==='trace');
+  tr.style.display=tab==='trace'?'block':'none';
+}
+
+function clearError(){
+  const el=document.getElementById('error-bar');
+  el.classList.remove('visible');
+  el.textContent='';
+}
+function showError(msg){
+  const el=document.getElementById('error-bar');
+  el.textContent='⚠ '+msg;
+  el.classList.add('visible');
+}
+
+function setStatus(s){
+  document.getElementById('status-text').textContent=s;
+}
+
+// Build register grid
+function initRegGrid(){
+  const grid=document.getElementById('reg-grid');
+  grid.innerHTML='';
+  for(let i=0;i<8;i++){
+    const cell=document.createElement('div');
+    cell.className='reg-cell';
+    cell.id=`reg-${i}`;
+    cell.innerHTML=`
       <div class="reg-name">R${i}${i===7?' (SP)':''}</div>
-      <div class="reg-val">${v}</div>
-      <div class="reg-digits">[${reg.digits().join(',')}]</div>
-      ${reg.shadow_active ? '<div class="reg-shadow-tag">SHADOW Regime</div>' : ''}
+      <div class="reg-val" id="rv-${i}">0</div>
+      <div class="reg-digits" id="rd-${i}"></div>
+      <div class="reg-shadow-tag" id="rs-${i}" style="display:none">SHADOW ◆</div>
     `;
     grid.appendChild(cell);
   }
-  document.getElementById('flag-Z').textContent = cpu.flags.Z;
-  document.getElementById('flag-Z').classList.toggle('on', cpu.flags.Z);
-  document.getElementById('flag-N').textContent = cpu.flags.N;
-  document.getElementById('flag-N').classList.toggle('on', cpu.flags.N);
-  document.getElementById('flag-S').textContent = cpu.flags.S;
-  document.getElementById('flag-S').classList.toggle('shadow-on', cpu.flags.S);
-  document.getElementById('v-pc').textContent = cpu.pc.toString().padStart(4, '0');
-  document.getElementById('v-cycles').textContent = cpu.cycles;
-  
-  if(currentMode === 'substrate') {
-    document.getElementById('v-nrci').textContent = GolayCodeEngine.NRCI.toFixed(4);
-    let totalWork = cpu.registers.reduce((a, r) => a + r.carry_work, 0);
-    document.getElementById('v-carry').textContent = totalWork;
-    
-    // Manifold viz
-    const bits = document.getElementById('manifold-bits');
-    bits.innerHTML = '';
-    GolayCodeEngine.PERFECT_V1.forEach(b => {
-      const bit = document.createElement('div');
-      bit.className = 'manifold-cell' + (b ? ' active' : '');
-      bits.appendChild(bit);
-    });
+}
+
+function updateUI(cpu,info){
+  // Registers
+  for(let i=0;i<8;i++){
+    const v=cpu._read_reg(i);
+    const cell=document.getElementById(`reg-${i}`);
+    const valEl=document.getElementById(`rv-${i}`);
+    const digEl=document.getElementById(`rd-${i}`);
+    const shadEl=document.getElementById(`rs-${i}`);
+    valEl.textContent=String(v);
+    if(currentMode==='substrate'){
+      const reg=cpu.registers[i];
+      const digs=reg.digits();
+      digEl.textContent='['+digs.join(',')+ ']';
+      const isShadow=reg.shadow_active;
+      cell.className='reg-cell'+(isShadow?' shadow':v!==0?' active':'');
+      shadEl.style.display=isShadow?'':'none';
+    } else {
+      digEl.textContent='';
+      cell.className='reg-cell'+(v!==0?' active':'');
+      shadEl.style.display='none';
+    }
+  }
+
+  // Flags
+  ['Z','N','C','V'].forEach(f=>{
+    const el=document.getElementById(`flag-${f}`);
+    el.textContent=String(cpu.flags[f]);
+    el.className='flag-val'+(cpu.flags[f]?' on':'');
+  });
+  const sEl=document.getElementById('flag-S');
+  sEl.textContent=String(cpu.flags.S);
+  sEl.className='flag-val'+(cpu.flags.S?' shadow-on':'');
+
+  // PC
+  document.getElementById('v-pc').textContent=cpu.pc.toString().padStart(4,'0');
+
+  // Stats
+  document.getElementById('v-cycles').textContent=info?String(info.cycles):'—';
+  document.getElementById('v-ips').textContent=info?fmtIPS(info.ips):'—';
+  document.getElementById('v-time').textContent=info?fmtTime(info.elapsed_s):'—';
+  if(traceEnabled&&info?.trace_hash){
+    document.getElementById('v-hash').textContent=info.trace_hash.slice(0,16)+'…';
+  }
+
+  // Substrate fingerprint
+  if(currentMode==='substrate'){
+    const fp=cpu.substrate_fingerprint();
+    document.getElementById('v-nrci').textContent=fp.nrci_mean.toFixed(4);
+    document.getElementById('v-carry').textContent=String(fp.total_carry_work);
+    document.getElementById('v-shadowregs').textContent=
+      fp.shadow_registers.length?fp.shadow_registers.map(i=>'R'+i).join(' '):'none';
+    document.getElementById('v-sha').textContent=fp.magnitude_sha||'—';
+  }
+
+  // Memory
+  updateMemoryGrid(cpu);
+}
+
+function fmtIPS(n){
+  if(!isFinite(n)) return '∞';
+  if(n>=1e6) return (n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(0)+'k';
+  return String(n);
+}
+function fmtTime(s){
+  if(s<0.001) return '<1ms';
+  if(s<1) return (s*1000).toFixed(1)+'ms';
+  return s.toFixed(3)+'s';
+}
+
+function updateMemoryGrid(cpu){
+  if(currentTab!=='mem') return;
+  const grid=document.getElementById('mem-grid');
+  grid.innerHTML='';
+  const rows=Math.ceil(cpu.memory_size/16);
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');
+    row.className='mem-row';
+    const addr=document.createElement('span');
+    addr.className='mem-addr';
+    addr.textContent=(r*16).toString(16).padStart(3,'0').toUpperCase();
+    row.appendChild(addr);
+    const vals=document.createElement('span');
+    vals.className='mem-val';
+    for(let c=0;c<16;c++){
+      const idx=r*16+c;
+      if(idx>=cpu.memory_size) break;
+      const v=cpu.memory[idx].read();
+      const cell=document.createElement('span');
+      cell.className='mem-cell'+(v!==0?' nonzero':'');
+      cell.textContent=String(v);
+      vals.appendChild(cell);
+    }
+    row.appendChild(vals);
+    grid.appendChild(row);
   }
 }
 
-function showTab(t) {
-  const content = document.getElementById('tab-content');
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase() === t));
-  if(t === 'theory') {
-    content.innerHTML = `
-      <div class="doc-section">
-        <h1 class="doc-h1">Substrate Theory</h1>
-        <p class="doc-p">NoiseCore is grounded in the <strong>[24,12,8] Golay Code</strong>. Computation is not a simulation, but a measurement of geometric frustration.</p>
-        <h1 class="doc-h1">The Shadow Regime</h1>
-        <p class="doc-p">The "Phenomenal" regime is linear (digits 0-4). Beyond this, the substrate folds into "Shadow" space, latching the <strong>S flag</strong>.</p>
-      </div>
-    `;
-  } else if(t === 'isa') {
-    content.innerHTML = '<p class="doc-p">ISA Table Loading...</p>';
+function buildISAContent(){
+  const el=document.getElementById('isa-content');
+  let html='';
+  for(const grp of ISA_GROUPS){
+    html+=`<div class="isa-group"><div class="isa-group-label">${grp.label}</div>`;
+    for(const[op,form,flags] of grp.rows){
+      const isALU=flags.includes('★')?'★ SubALU':'';
+      const isBit=flags.includes('◆')?'◆ Bitwise':'';
+      html+=`<div class="isa-row">
+        <span class="isa-op">${op}</span>
+        <span class="isa-form">${form||'(none)'}</span>
+        <span class="isa-flags">${flags.replace('★','').replace('◆','').trim()}</span>
+      </div>`;
+    }
+    html+='</div>';
+  }
+  html+='<div class="isa-group"><div class="isa-group-label">SYSCALL NUMBERS</div>';
+  for(const s of SYSCALL_INFO){
+    html+=`<div class="isa-row"><span class="isa-form" style="color:var(--text2)">${s}</span></div>`;
+  }
+  html+='<div style="margin-top:10px;font-size:8px;color:var(--text2);">★ = SubstrateALU (base-12 digit-chain) in substrate mode<br>◆ = cell-read → binary op → digit-write (LAW_004)</div>';
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function updateTraceTab(cpu){
+  const list=document.getElementById('trace-list');
+  list.innerHTML='';
+  if(!cpu.trace.length){
+    list.innerHTML='<div style="font-size:9px;color:var(--text2);padding:8px">No trace — enable TRACE and re-run.</div>';
+    return;
+  }
+  const max=Math.min(cpu.trace.length,500);
+  for(let i=0;i<max;i++){
+    const t=cpu.trace[i];
+    const row=document.createElement('div');
+    row.className='trace-row';
+    const labels=currentAssembled?currentAssembled.labels:{};
+    const mnem=Assembler.disassembleInstr(t.instr,labels);
+    const fs=`Z${t.flags.Z}N${t.flags.N}C${t.flags.C}V${t.flags.V}S${t.flags.S}`;
+    row.innerHTML=`<span class="trace-pc">${String(t.pc).padStart(4,'0')}</span>
+      <span class="trace-op">${mnem}</span>
+      <span class="trace-flags">${fs}</span>`;
+    list.appendChild(row);
+  }
+  if(cpu.trace.length>500){
+    const m=document.createElement('div');
+    m.style='font-size:8px;color:var(--text2);padding:4px';
+    m.textContent=`… and ${cpu.trace.length-500} more instructions`;
+    list.appendChild(m);
+  }
+}
+
+let currentAssembled=null;
+
+function appendConsole(text,cls='') {
+  const el=document.getElementById('console-out');
+  const span=document.createElement('span');
+  span.className=cls;
+  span.textContent=text;
+  el.appendChild(span);
+  el.scrollTop=el.scrollHeight;
+}
+
+function runProgram(){
+  const source=document.getElementById('nca-editor').value;
+  clearError();
+  clearConsole();
+
+  // Assemble
+  let assembled;
+  try{
+    assembled=Assembler.assemble(source);
+    currentAssembled=assembled;
+  }catch(e){
+    showError(e.message);
+    appendConsole('ASSEMBLER ERROR: '+e.message+'\n','con-asm-error');
+    setStatus('ASS ERROR');
+    return;
+  }
+
+  if(assembled.instructions.length===0){
+    showError('No instructions assembled.');
+    return;
+  }
+
+  // Create CPU
+  const cpu=new CPU({
+    substrate_mode:currentMode==='substrate',
+    word_bits:16,
+    memory_size:256,
+    trace:traceEnabled,
+    max_cycles:2000000,
+  });
+  currentCPU=cpu;
+
+  // Load memory init from .data sections
+  for(const[addr,val] of Object.entries(assembled.memInit)){
+    cpu._write_mem(parseInt(addr),val);
+  }
+
+  // Run
+  setStatus('RUNNING…');
+  document.getElementById('run-btn').classList.add('running');
+  document.getElementById('run-btn').textContent='■ STOP';
+
+  let info;
+  try{
+    info=cpu.run(assembled.instructions);
+  }catch(e){
+    showError(e.message);
+    appendConsole('RUNTIME ERROR: '+e.message+'\n','con-error');
+    document.getElementById('run-btn').classList.remove('running');
+    document.getElementById('run-btn').textContent='▶ RUN';
+    setStatus('ERROR');
+    updateUI(cpu,null);
+    return;
+  }
+
+  document.getElementById('run-btn').classList.remove('running');
+  document.getElementById('run-btn').textContent='▶ RUN';
+  setStatus('DONE');
+
+  // Show console output
+  const output=cpu.console.output();
+  if(output){
+    appendConsole(output,'con-out');
   } else {
-    content.innerHTML = '<p class="doc-p">Memory View Loading...</p>';
+    appendConsole('(no output)\n','con-info');
   }
+
+  // Show stats line
+  const statsLine=`\n[cycles: ${info.cycles} | ${fmtIPS(info.ips)} ips | ${fmtTime(info.elapsed_s)} | halted: ${info.halted}]`;
+  appendConsole(statsLine+'\n','con-info');
+
+  if(currentMode==='substrate'){
+    const fp=cpu.substrate_fingerprint();
+    const subLine=`[substrate: S=${fp.shadow_flag} | carry_work=${fp.total_carry_work} | NRCI=${fp.nrci_mean.toFixed(4)} | sha16=${fp.magnitude_sha}]`;
+    appendConsole(subLine+'\n','con-info');
+    if(traceEnabled&&info.trace_hash){
+      appendConsole(`[trace_hash: ${info.trace_hash}]\n`,'con-info');
+    }
+  }
+
+  updateUI(cpu,info);
+  if(traceEnabled) updateTraceTab(cpu);
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  cpu = new CPU();
-  updateUI();
-  showTab('theory');
-  printTerm("NoiseCore OS v1.2.0 Loaded.\n", "green");
-  printTerm("Substrate: PERFECT_V1 active.\n", "doc-code");
+// Keyboard shortcut: Ctrl+Enter to run
+document.getElementById('nca-editor').addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();runProgram();}
+  if(e.key==='Tab'){
+    e.preventDefault();
+    const ta=e.target;
+    const s=ta.selectionStart, end=ta.selectionEnd;
+    ta.value=ta.value.substring(0,s)+'    '+ta.value.substring(end);
+    ta.selectionStart=ta.selectionEnd=s+4;
+  }
 });
 
+// Resizer logic
+function makeResizer(id,leftId,rightId){
+  const resizer=document.getElementById(id);
+  let startX,startLeft,startRight;
+  resizer.addEventListener('mousedown',e=>{
+    startX=e.clientX;
+    startLeft=document.getElementById(leftId).offsetWidth;
+    startRight=document.getElementById(rightId).offsetWidth;
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+    e.preventDefault();
+  });
+  function onMove(e){
+    const dx=e.clientX-startX;
+    const nl=Math.max(200,startLeft+dx);
+    const nr=Math.max(200,startRight-dx);
+    document.getElementById(leftId).style.width=nl+'px';
+    document.getElementById(rightId).style.width=nr+'px';
+  }
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+  }
+}
+
+// Init
+function init(){
+  initRegGrid();
+  buildISAContent();
+  showTab('mem');
+
+  // Create initial CPU for display
+  const cpu=new CPU({substrate_mode:false});
+  updateUI(cpu,null);
+
+  // Set default editor content
+  const defaultSrc=`; NoiseCore Assembly (.nca) — NoiseCore VM v1.2.0
+; Select an example above, or write your own program here.
+; Ctrl+Enter to run.
+;
+; Quick reference:
+;   LOAD R0, #42     ; load immediate
+;   ADD  R2, R0, R1  ; arithmetic
+;   SYSCALL 1        ; print R0 as integer
+;   SYSCALL 6        ; print newline
+;   HALT
+;
+; Enable SUBSTRATE mode above to activate:
+;   - Base-12 SubstrateALU (LAW_SUBSTRATE_ALU_001-004)
+;   - Shadow Processor (LAW_SHADOW_PROCESSOR_001)
+;   - S flag, carry_work, NRCI, magnitude_sha fingerprint
+;   - CLRS instruction to reset S flag
+
+    LOAD R0, #1836   ; proton mass (electron mass units)
+    LOAD R1, #1839   ; neutron mass
+    ADD  R2, R0, R1  ; deuterium assembly
+    MOV  R0, R2
+    SYSCALL 1        ; prints 3675
+    SYSCALL 6
+    HALT`;
+  document.getElementById('nca-editor').value=defaultSrc;
+
+  // Resizers
+  makeResizer('resizer-left','panel-editor','panel-center');
+  makeResizer('resizer-right','panel-center','panel-right');
+
+  // Log Golay info to console
+  const gi=GolayCodeEngine.getPERFECT_V1Info();
+  appendConsole(`NoiseCore VM v1.2.0 — Browser Implementation\n`,'con-info');
+  appendConsole(`Golay [24,12,8] substrate active.\n`,'con-info');
+  appendConsole(`PERFECT_V1: ${gi.vector}  hw=${gi.hw}  syndrome_weight=${gi.baseline_syndrome_weight}\n`,'con-info');
+  appendConsole(`NRCI = 10/(10+|${gi.hw}-12|) = ${gi.nrci.toFixed(6)}  (LAW_SHADOW_PROCESSOR_001)\n`,'con-info');
+  appendConsole(`Displacement table [d0..d11]: [${gi.displacements.join(',')}]\n`,'con-info');
+  appendConsole(`Elastic limit: digit ≤ 4 (Phenomenal), digit > 4 (Shadow Regime).\n`,'con-info');
+  appendConsole(`Press Ctrl+Enter or ▶ RUN to execute. Select SUBSTRATE mode for full geometry.\n\n`,'con-info');
+}
+
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
