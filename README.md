@@ -1,13 +1,14 @@
 ![noisecore](noisecore_vm_1_3.png)
 
 # NoiseCore VM
-Version 1.2.0
+Version 1.3.0
+(Version 1.2.0 available as index_1.html - contains no Leech Lattice, Monstor Group or Barnes-Wall 256)
 
 A substrate-mediated virtual computation environment grounded in the **Extended Binary Golay Code [24,12,8]**.
 
 NoiseCore VM is a fully functional virtual CPU whose registers and memory are backed by the Golay geometric substrate of the Universal Binary Principle (UBP) framework. It is not a simulation: it is a real register machine with a 46-instruction ISA, a two-pass symbolic assembler, and a SubstrateALU that performs arithmetic natively on base-12 digit arrays.
 
-## 🚀 Interactive IDE
+## Interactive IDE
 Explore NoiseCore VM directly in your browser:
 **[Launch NoiseCore Interactive IDE](https://DigitalEuan.github.io/noisecore/)**
 
@@ -17,7 +18,7 @@ The IDE features:
 * **Full Documentation**: Embedded architectural theory, ISA reference, and programmer's guide.
 * **Substrate Mode**: Toggle between high-speed plain execution and geometrically honest substrate-mediated computation.
 
-## 🧠 Core Concepts
+## Core Concepts
 
 ### Substrate-Mediated Arithmetic
 In **Substrate Mode**, all arithmetic (ADD, SUB, MUL, DIV) is performed digit-by-digit on base-12 cell arrays. Python never operates on the full integer values; instead, the **SubstrateALU** implements:
@@ -31,21 +32,21 @@ The **S (Shadow) flag** is a phase-transition sensor. For the `PERFECT_V1` subst
 ### Carry Work
 NoiseCore tracks **Carry Work** (LAW_CARRY_WORK_001), the cumulative count of base-4 carry events during value assembly. This represents the geometric binding energy of the computed values, providing a physical dimension to virtual computation.
 
-## 🛠 System at a Glance
+## System at a Glance
 * **CPU**: 8 general-purpose registers (R0–R7), 256-cell memory, 5-flag register {Z N C V S}.
 * **ISA**: 46 instructions including control flow, immediate arithmetic, and stack operations.
 * **Assembler**: Two-pass .nca source files with labels, .equ constants, and .data sections.
 * **CLI**: `noisecore run / asm / disasm / repl / info`.
 * **Tests**: 208 passing tests verifying every aspect of the VM and SubstrateALU.
 
-## 📖 Documentation
+## Documentation
 For a deep dive into the system, refer to:
 * **[User's Manual (PDF)](./NoiseCore_VM_Users_Manual_v1_2_0.pdf)**: Complete self-contained reference.
 * **[Architecture Guide](./docs/ARCHITECTURE.md)**: Layers from Python API to Golay substrate.
 * **[ISA Reference](./docs/ISA.md)**: Detailed instruction behavior and flag settings.
 * **[Programmer's Guide](./docs/PROGRAMMER_GUIDE.md)**: Patterns and tips for writing .nca assembly.
 
-## New!
+## New in V1.3.0
 Triad: Leech Lattice Λ₂₄
 The Leech Lattice Λ₂₄ is the unique 24-dimensional even unimodular lattice with no vectors of squared norm 2. It achieves the densest possible sphere packing in 24-D, with kissing number 196,560. NoiseCore VM constructs it directly from the existing Golay substrate via Construction A: every weight-8 Golay codeword (an "octad") lifts to 128 lattice points by replacing each active bit with ±2, with the constraint that the number of negative signs is even.
 
