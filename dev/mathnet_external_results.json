@@ -1,0 +1,1728 @@
+{
+  "summary": {
+    "total": 79,
+    "noise_solved": 22,
+    "correct": 21,
+    "unsupported": 57,
+    "noise_coverage": "27%",
+    "noise_accuracy": "95%",
+    "triad": {
+      "golay_active": false,
+      "leech_active": false,
+      "monster_active": true,
+      "stable_count": 2,
+      "sporadic_count": 26,
+      "thresholds": {
+        "golay": 12,
+        "leech": 24,
+        "monster": 26
+      },
+      "level": 0
+    }
+  },
+  "results": [
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_NT_001",
+      "problem": "Find all positive integers $n$ for which $2^n - 1$ is divisible by 7.",
+      "expected": "n divisible by 3",
+      "category": "Number Theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_NT_002",
+      "problem": "Solve the inequality $\\log_a(x^2 - x - 2) > \\log_a(3 + 2x - x^2)$ given that $x = a + 1$ is a soluti",
+      "expected": "x in (5/2, 3), a in (1, 2)",
+      "category": "Number Theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_NT_003",
+      "problem": "Prove that the fraction $\\frac{21n+4}{14n+3}$ is irreducible for every natural number $n$.",
+      "expected": "gcd(21n+4, 14n+3) = 1 for all n",
+      "category": "Number Theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_NT_004",
+      "problem": "Find all pairs of positive integers $(m, n)$ such that $m^2 - n^2 = 2026$.",
+      "expected": "No solution (2026 = 2 \u00d7 1013, 1013 prime; m-n and m+n same parity needed)",
+      "category": "Number Theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_NT_005",
+      "problem": "Find the largest integer $n$ such that $n$ is divisible by all positive integers less than $\\sqrt[3]",
+      "expected": "420",
+      "category": "Number Theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_ALG_001",
+      "problem": "Solve the system: $x + y + z = a$, $x^2 + y^2 + z^2 = b^2$, $xy = z^2$ where $a$ and $b$ are given c",
+      "expected": "z = (a^2 - b^2)/(2a), x+y = a - z, xy = z^2; condition: a != 0 and discriminant >= 0",
+      "category": "Algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_ALG_002",
+      "problem": "Let $a, b, c$ be positive reals with $a + b + c = 1$. Prove that $a^2 + b^2 + c^2 \\geq \\frac{1}{3}$.",
+      "expected": "Proof via Cauchy-Schwarz or AM-QM inequality",
+      "category": "Algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_ALG_003",
+      "problem": "Let $f$ be a real-valued function defined for all real $x$ such that for some positive constant $a$:",
+      "expected": "f has period 2a",
+      "category": "Algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_ALG_004",
+      "problem": "Find all real solutions to $x^4 - 3x^3 + 4x^2 - 3x + 1 = 0$.",
+      "expected": "x = (3 \u00b1 sqrt(5))/2 divided by 2, i.e. x = (3\u00b1sqrt(5))/4... actually x=(1+sqrt(5))/2 and x=(1-sqrt(5))/2 after dividing by x^2",
+      "category": "Algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_ALG_005",
+      "problem": "Find all functions $f: \\mathbb{R} \\to \\mathbb{R}$ satisfying $f(x^2 + y + f(y)) = 2y + f(x)^2$ for a",
+      "expected": "f(x) = x",
+      "category": "Algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_GEO_001",
+      "problem": "An arbitrary point $M$ is selected in the interior of segment $AB$. The squares $AMCD$ and $MBEF$ ar",
+      "expected": "The three lines meet at a single point",
+      "category": "Geometry",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_GEO_002",
+      "problem": "In triangle $ABC$, the median from $A$ has length $m_a$. Prove that $m_a \\leq \\frac{b+c}{2}$.",
+      "expected": "Equality iff b=c (isoceles)",
+      "category": "Geometry",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_GEO_003",
+      "problem": "Two circles $G_1$ and $G_2$ intersect at two points $M$ and $N$. Let $AB$ be the line tangent to the",
+      "expected": "The midpoint of CD lies on MN",
+      "category": "Geometry",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_GEO_004",
+      "problem": "In a right triangle with legs $a$ and $b$ and hypotenuse $c$, prove that $a + b \\leq c\\sqrt{2}$.",
+      "expected": "Equality iff a=b (isoceles right triangle)",
+      "category": "Geometry",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_GEO_005",
+      "problem": "A regular tetrahedron has edge length $a$. Find the radius of the inscribed sphere.",
+      "expected": "r = a/(2*sqrt(6))",
+      "category": "Geometry",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_COMB_001",
+      "problem": "Prove that from a set of ten distinct two-digit numbers, it is possible to select two disjoint subse",
+      "expected": "Pigeonhole principle proof",
+      "category": "Combinatorics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_COMB_002",
+      "problem": "In how many ways can $n$ identical balls be distributed into $k$ distinct boxes such that each box c",
+      "expected": "C(n-1, k-1)",
+      "category": "Combinatorics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_COMB_003",
+      "problem": "In a mathematical competition, some competitors are friends. Each person has at most $d$ friends. Pr",
+      "expected": "Greedy/probabilistic argument",
+      "category": "Combinatorics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_COMB_004",
+      "problem": "How many subsets of $\\{1, 2, 3, \\ldots, 10\\}$ have the property that the sum of the elements is divi",
+      "expected": "The number is (2^10 + 2)/3 = 342",
+      "category": "Combinatorics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "MN_COMB_005",
+      "problem": "Find all functions $f: \\mathbb{N} \\to \\mathbb{N}$ satisfying $f(f(n)) + f(n) = 2n + 3$ and $f(0) = 1",
+      "expected": "f(n) = 2n+1 for even n, f(n) = n+1 for odd n... actually f(n)=n+1 for all n",
+      "category": "Combinatorics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_01",
+      "problem": "Find the derivative of `x^3 * sin(x)` with respect to x.",
+      "expected": "3*x**2*sin(x) + x**3*cos(x)",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_02",
+      "problem": "Compute the partial derivative of `x^2*y + y^3*z` with respect to y.",
+      "expected": "x**2 + 3*y**2*z",
+      "category": "multivariable_calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_03",
+      "problem": "Evaluate the integral of `x^2 * exp(x)` with respect to x.",
+      "expected": "(x**2 - 2*x + 2)*exp(x)",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_04",
+      "problem": "Find the gradient of `x^2*y + y^2*z + z^2*x`.",
+      "expected": "(2*x*y + z**2, x**2 + 2*y*z, y**2 + 2*x*z)",
+      "category": "multivariable_calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_05",
+      "problem": "Compute the limit of `sin(x)/x` as x approaches 0.",
+      "expected": "1",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "PERM",
+      "inputs": {
+        "n": 5,
+        "k": 0
+      },
+      "result": 1,
+      "trace": [],
+      "fingerprint": {
+        "gray_hw": 1,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.4762,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": -0.026296,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 1.4,
+      "mode": "SV",
+      "op_number": 1,
+      "id": "CALC_06",
+      "problem": "Find the Taylor series expansion of `exp(x)` up to 5 terms around x=0.",
+      "expected": "1 + x + x**2/2 + x**3/6 + x**4/24 + O(x**5)",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_07",
+      "problem": "Compute the definite integral of `sin(x)` from 0 to pi.",
+      "expected": "2",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_08",
+      "problem": "Find the derivative of `ln(x^2 + 1)` with respect to x.",
+      "expected": "2*x/(x**2 + 1)",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_09",
+      "problem": "Compute the integral of `1/(1 + x^2)` with respect to x.",
+      "expected": "atan(x)",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "CALC_10",
+      "problem": "Find the second derivative of `x^4 - 3*x^2 + 2` with respect to x.",
+      "expected": "12*x**2 - 6",
+      "category": "calculus",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_01",
+      "problem": "Find the determinant of the matrix [[1, 2, 3], [4, 5, 6], [7, 8, 10]].",
+      "expected": "-3",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_02",
+      "problem": "Find the eigenvalues of the matrix [[2, 1], [1, 2]].",
+      "expected": "{1: 1, 3: 1}",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_03",
+      "problem": "Compute the inverse of the matrix [[1, 2], [3, 4]].",
+      "expected": "[[-2, 1], [3/2, -1/2]]",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_04",
+      "problem": "Find the rank of the matrix [[1, 2, 3], [4, 5, 6], [7, 8, 9]].",
+      "expected": "2",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_05",
+      "problem": "Find the null space of the matrix [[1, 2, 3], [4, 5, 6], [7, 8, 9]].",
+      "expected": "span of (1, -2, 1)",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_06",
+      "problem": "Find the determinant of the matrix [[2, 0], [0, 3]].",
+      "expected": "6",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_07",
+      "problem": "Find the eigenvalues of the matrix [[0, 1], [-1, 0]].",
+      "expected": "{-I: 1, I: 1}",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "LINALG_08",
+      "problem": "Find the rank of the matrix [[1, 0, 0], [0, 1, 0], [0, 0, 0]].",
+      "expected": "2",
+      "category": "linear_algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "CROSS",
+      "result": "(-3, 6, -3)",
+      "trace": [
+        "Cross: (-3, 6, -3)"
+      ],
+      "fingerprint": {
+        "gray_hw": 17,
+        "nearest_codeword_weight": 16,
+        "nrci": 0.6667,
+        "lattice": "Hexadecad",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.234096,
+          "decoder_gain": 0.013515,
+          "clarity": "HIGH"
+        }
+      },
+      "mode": "SV",
+      "inputs": {
+        "a": [
+          1.0,
+          2.0,
+          3.0
+        ],
+        "b": [
+          4.0,
+          5.0,
+          6.0
+        ]
+      },
+      "id": "VEC_01",
+      "problem": "Compute the cross product of <1, 2, 3> and <4, 5, 6>.",
+      "expected": "(-3, 6, -3)",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "DOT",
+      "inputs": {
+        "u": [
+          3.0,
+          -1.0,
+          4.0
+        ],
+        "v": [
+          2.0,
+          5.0,
+          -3.0
+        ]
+      },
+      "result": -11.0,
+      "trace": [
+        "3.0\u00d72.0=6.0",
+        "-1.0\u00d75.0=-5.0",
+        "4.0\u00d7-3.0=-12.0",
+        "sum=-11.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": -0.017106,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 12.7,
+      "mode": "SV",
+      "op_number": 2,
+      "id": "VEC_02",
+      "problem": "Compute the dot product of <3, -1, 4> and <2, 5, -3>.",
+      "expected": "-11",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "MAG",
+      "inputs": {
+        "v": [
+          3.0,
+          4.0,
+          12.0
+        ]
+      },
+      "result": 13,
+      "trace": [
+        "\u03a3v\u1d62\u00b2=169.0",
+        "\u221a169.0=13.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.266789,
+          "decoder_gain": -0.009652,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 6.1,
+      "mode": "SV",
+      "op_number": 3,
+      "id": "VEC_03",
+      "problem": "Find the magnitude of the vector <3, 4, 12>.",
+      "expected": "13",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "VEC_04",
+      "problem": "Find the divergence of the vector field F = (x^2*y, y^2*z, z^2*x).",
+      "expected": "2*x*y + 2*y*z + 2*x*z",
+      "category": "vector_physics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "VEC_05",
+      "problem": "Find the curl of the vector field F = (y*z, x*z, x*y).",
+      "expected": "(0, 0, 0)",
+      "category": "vector_physics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "MAG",
+      "inputs": {
+        "v": [
+          5.0,
+          12.0
+        ]
+      },
+      "result": 13,
+      "trace": [
+        "\u03a3v\u1d62\u00b2=169.0",
+        "\u221a169.0=13.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.266789,
+          "decoder_gain": -0.009652,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.8,
+      "mode": "SV",
+      "op_number": 4,
+      "id": "VEC_06",
+      "problem": "Find the magnitude of the vector <5, 12>.",
+      "expected": "13",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "DOT",
+      "inputs": {
+        "u": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "v": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "result": 0.0,
+      "trace": [
+        "1.0\u00d70.0=0.0",
+        "0.0\u00d71.0=0.0",
+        "0.0\u00d70.0=0.0",
+        "sum=0.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 0,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.4545,
+        "lattice": "Identity",
+        "on_lattice": true,
+        "bw256": {
+          "macro_nrci": 1.0,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 8.3,
+      "mode": "SV",
+      "op_number": 5,
+      "id": "VEC_07",
+      "problem": "Compute the dot product of <1, 0, 0> and <0, 1, 0>.",
+      "expected": "0",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "CROSS",
+      "result": "(0, 0, 1)",
+      "trace": [
+        "Cross: (0, 0, 1)"
+      ],
+      "fingerprint": {
+        "gray_hw": 12,
+        "nearest_codeword_weight": 12,
+        "nrci": 1.0,
+        "lattice": "Dodecad",
+        "on_lattice": true,
+        "bw256": {
+          "macro_nrci": 0.241494,
+          "decoder_gain": 0.0,
+          "clarity": "LOW"
+        }
+      },
+      "mode": "SV",
+      "inputs": {
+        "a": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "b": [
+          0.0,
+          1.0,
+          0.0
+        ]
+      },
+      "id": "VEC_08",
+      "problem": "Compute the cross product of <1, 0, 0> and <0, 1, 0>.",
+      "expected": "(0, 0, 1)",
+      "category": "vector_physics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "GCD",
+      "inputs": {
+        "a": 252,
+        "b": 198
+      },
+      "result": 18,
+      "trace": [
+        "gcd(252,198): 252 mod 198 = 54",
+        "gcd(198,54): 198 mod 54 = 36",
+        "gcd(54,36): 54 mod 36 = 18",
+        "gcd(36,18): 36 mod 18 = 0"
+      ],
+      "fingerprint": {
+        "gray_hw": 4,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5556,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.292304,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 5.0,
+      "mode": "SV",
+      "op_number": 6,
+      "id": "NUM_01",
+      "problem": "Find the greatest common divisor of 252 and 198.",
+      "expected": "18",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "NUM_02",
+      "problem": "For which positive integers n is 2^n - 1 divisible by 7?",
+      "expected": "n = 3k for positive integer k",
+      "category": "number_theory",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "GCD",
+      "inputs": {
+        "a": 48,
+        "b": 36
+      },
+      "result": 12,
+      "trace": [
+        "gcd(48,36): 48 mod 36 = 12",
+        "gcd(36,12): 36 mod 12 = 0"
+      ],
+      "fingerprint": {
+        "gray_hw": 2,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.007973,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 2.7,
+      "mode": "SV",
+      "op_number": 7,
+      "id": "NUM_03",
+      "problem": "Find the GCD of 48 and 36.",
+      "expected": "12",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "LCM",
+      "inputs": {
+        "a": 12,
+        "b": 18
+      },
+      "result": 36,
+      "trace": [
+        "GCD(12,18)=6",
+        "LCM=36"
+      ],
+      "fingerprint": {
+        "gray_hw": 4,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5556,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.257789,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 2.6,
+      "mode": "SV",
+      "op_number": 8,
+      "id": "NUM_04",
+      "problem": "Find the LCM of 12 and 18.",
+      "expected": "36",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "IS_PRIME",
+      "inputs": {
+        "n": 97
+      },
+      "result": true,
+      "trace": [
+        "Trial division to \u221a97=9",
+        "No factor found\u2192prime"
+      ],
+      "fingerprint": {
+        "gray_hw": 10,
+        "nearest_codeword_weight": 8,
+        "nrci": 0.8333,
+        "lattice": "Octad",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.22058,
+          "decoder_gain": 0.0,
+          "clarity": "LOW"
+        }
+      },
+      "time_us": 5.0,
+      "mode": "SV",
+      "op_number": 9,
+      "id": "NUM_05",
+      "problem": "Is 97 a prime number?",
+      "expected": "True",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "MODPOW",
+      "inputs": {
+        "base": 7,
+        "exp": 100,
+        "mod": 13
+      },
+      "result": 9,
+      "trace": [
+        "step 2: bit=1, result=9",
+        "step 5: bit=1, result=1",
+        "step 6: bit=1, result=9"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.036565,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.8,
+      "mode": "SV",
+      "op_number": 10,
+      "id": "NUM_06",
+      "problem": "Compute 7^100 mod 13.",
+      "expected": "9",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "GCD",
+      "inputs": {
+        "a": 100,
+        "b": 75
+      },
+      "result": 25,
+      "trace": [
+        "gcd(100,75): 100 mod 75 = 25",
+        "gcd(75,25): 75 mod 25 = 0"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.036565,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 20.8,
+      "mode": "SV",
+      "op_number": 11,
+      "id": "NUM_07",
+      "problem": "Find the GCD of 100 and 75.",
+      "expected": "25",
+      "category": "number_theory",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_01",
+      "problem": "Solve the equation `x^2 - 5*x + 6 = 0` for x.",
+      "expected": "[2, 3]",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_02",
+      "problem": "Factor the polynomial `x^2 - 4`.",
+      "expected": "(x - 2)*(x + 2)",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_03",
+      "problem": "Expand `(x + 2)^3`.",
+      "expected": "x**3 + 6*x**2 + 12*x + 8",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_04",
+      "problem": "Solve `x^2 - 4 = 0` for x.",
+      "expected": "[-2, 2]",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_05",
+      "problem": "Simplify `(x^2 - 1)/(x - 1)`.",
+      "expected": "x + 1",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "ALG_06",
+      "problem": "Solve `2*x + 3 = 7` for x.",
+      "expected": "[2]",
+      "category": "algebra",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "CHOOSE",
+      "inputs": {
+        "n": 10,
+        "k": 3
+      },
+      "result": 120,
+      "trace": [
+        "step 0: partial=10",
+        "step 1: partial=45",
+        "step 2: partial=120"
+      ],
+      "fingerprint": {
+        "gray_hw": 2,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.007973,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.4,
+      "mode": "SV",
+      "op_number": 12,
+      "id": "COMB_01",
+      "problem": "How many ways can you choose 3 items from 10? (combination)",
+      "expected": "120",
+      "category": "combinatorics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "PERM",
+      "inputs": {
+        "n": 6,
+        "k": 4
+      },
+      "result": 360,
+      "trace": [
+        "\u00d76 \u2192 6",
+        "\u00d75 \u2192 30",
+        "\u00d74 \u2192 120",
+        "\u00d73 \u2192 360"
+      ],
+      "fingerprint": {
+        "gray_hw": 6,
+        "nearest_codeword_weight": 8,
+        "nrci": 0.625,
+        "lattice": "Octad",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.286818,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.7,
+      "mode": "SV",
+      "op_number": 13,
+      "id": "COMB_02",
+      "problem": "How many ways can you arrange 4 items from 6? (permutation)",
+      "expected": "360",
+      "category": "combinatorics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "CHOOSE",
+      "inputs": {
+        "n": 8,
+        "k": 3
+      },
+      "result": 56,
+      "trace": [
+        "step 0: partial=8",
+        "step 1: partial=28",
+        "step 2: partial=56"
+      ],
+      "fingerprint": {
+        "gray_hw": 2,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.007973,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.9,
+      "mode": "SV",
+      "op_number": 14,
+      "id": "COMB_03",
+      "problem": "Compute the binomial coefficient C(8, 3).",
+      "expected": "56",
+      "category": "combinatorics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "FACTORIAL",
+      "inputs": {
+        "n": 6
+      },
+      "result": 720,
+      "trace": [
+        "\u00d72 \u2192 2",
+        "\u00d73 \u2192 6",
+        "\u00d74 \u2192 24",
+        "\u00d75 \u2192 120",
+        "\u00d76 \u2192 720"
+      ],
+      "fingerprint": {
+        "gray_hw": 6,
+        "nearest_codeword_weight": 8,
+        "nrci": 0.625,
+        "lattice": "Octad",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.253512,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.1,
+      "mode": "SV",
+      "op_number": 15,
+      "id": "COMB_04",
+      "problem": "Compute 6 factorial.",
+      "expected": "720",
+      "category": "combinatorics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "CHOOSE",
+      "inputs": {
+        "n": 5,
+        "k": 2
+      },
+      "result": 10,
+      "trace": [
+        "step 0: partial=5",
+        "step 1: partial=10"
+      ],
+      "fingerprint": {
+        "gray_hw": 4,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5556,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.292304,
+          "decoder_gain": 0.0,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 4.8,
+      "mode": "SV",
+      "op_number": 16,
+      "id": "COMB_05",
+      "problem": "How many ways can you choose 2 items from 5? (combination)",
+      "expected": "10",
+      "category": "combinatorics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "MEAN",
+      "inputs": {
+        "data": [
+          4.0,
+          8.0,
+          6.0,
+          5.0,
+          3.0,
+          2.0,
+          8.0,
+          9.0,
+          2.0,
+          5.0
+        ],
+        "n": 10
+      },
+      "result": 5.2,
+      "trace": [
+        "sum=52.0",
+        "n=10",
+        "mean=5.2"
+      ],
+      "fingerprint": {
+        "gray_hw": 3,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5263,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": -0.017106,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 7.9,
+      "mode": "SV",
+      "op_number": 17,
+      "id": "STATS_01",
+      "problem": "Find the mean of the dataset: 4, 8, 6, 5, 3, 2, 8, 9, 2, 5.",
+      "expected": "5.2",
+      "category": "statistics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "VARIANCE",
+      "inputs": {
+        "data": [
+          2.0,
+          4.0,
+          4.0,
+          4.0,
+          5.0,
+          5.0,
+          7.0,
+          9.0
+        ]
+      },
+      "result": 4.0,
+      "trace": [
+        "\u03bc=5.0",
+        "var=4.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 2,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.007973,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 23.2,
+      "mode": "SV",
+      "op_number": 18,
+      "id": "STATS_02",
+      "problem": "Find the variance of the dataset: 2, 4, 4, 4, 5, 5, 7, 9.",
+      "expected": "4.0",
+      "category": "statistics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "STATS_03",
+      "problem": "Find the standard deviation of the dataset: 2, 4, 4, 4, 5, 5, 7, 9.",
+      "expected": "2.0",
+      "category": "statistics",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "MEAN",
+      "inputs": {
+        "data": [
+          10.0,
+          20.0,
+          30.0,
+          40.0,
+          50.0
+        ],
+        "n": 5
+      },
+      "result": 30.0,
+      "trace": [
+        "sum=150.0",
+        "n=5",
+        "mean=30.0"
+      ],
+      "fingerprint": {
+        "gray_hw": 2,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.5,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": 0.055081,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 3.8,
+      "mode": "SV",
+      "op_number": 19,
+      "id": "STATS_04",
+      "problem": "Find the mean of the dataset: 10, 20, 30, 40, 50.",
+      "expected": "30.0",
+      "category": "statistics",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "COMPLEX_01",
+      "problem": "Find the modulus of the complex number 3 + 4i.",
+      "expected": "5.0",
+      "category": "complex_analysis",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "COMPLEX_02",
+      "problem": "Find the conjugate of the complex number 3 + 4i.",
+      "expected": "3 - 4i",
+      "category": "complex_analysis",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "COMPLEX_03",
+      "problem": "Find the modulus of the complex number 5 + 12i.",
+      "expected": "13.0",
+      "category": "complex_analysis",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "COMPLEX_04",
+      "problem": "Find the modulus of the complex number 0 + 1i.",
+      "expected": "1.0",
+      "category": "complex_analysis",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "DIFFEQ_01",
+      "problem": "Solve the ODE: dy/dx = y. Express in terms of C1.",
+      "expected": "Eq(y(x), C1*exp(x))",
+      "category": "differential_equations",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "DIFFEQ_02",
+      "problem": "Find the derivative of `x^2 * cos(x)` with respect to x.",
+      "expected": "2*x*cos(x) - x**2*sin(x)",
+      "category": "differential_equations",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "DIFFEQ_03",
+      "problem": "Compute the integral of `cos(x)^2` with respect to x.",
+      "expected": "x/2 + sin(2*x)/4",
+      "category": "differential_equations",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "SERIES_01",
+      "problem": "Find the Taylor series expansion of `sin(x)` up to 5 terms around x=0.",
+      "expected": "x - x**3/6 + x**5/120 + O(x**6)",
+      "category": "series",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "SERIES_02",
+      "problem": "Find the Taylor series expansion of `cos(x)` up to 5 terms around x=0.",
+      "expected": "1 - x**2/2 + x**4/24 + O(x**5)",
+      "category": "series",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    },
+    {
+      "operation": "PERM",
+      "inputs": {
+        "n": 1,
+        "k": 0
+      },
+      "result": 1,
+      "trace": [],
+      "fingerprint": {
+        "gray_hw": 1,
+        "nearest_codeword_weight": 0,
+        "nrci": 0.4762,
+        "lattice": "Identity",
+        "on_lattice": false,
+        "bw256": {
+          "macro_nrci": 0.353085,
+          "decoder_gain": -0.026296,
+          "clarity": "HIGH"
+        }
+      },
+      "time_us": 1.2,
+      "mode": "SV",
+      "op_number": 20,
+      "id": "SERIES_03",
+      "problem": "Compute the limit of `(exp(x) - 1)/x` as x approaches 0.",
+      "expected": "1",
+      "category": "series",
+      "correct": true,
+      "verdict": "\u2713 CORRECT"
+    },
+    {
+      "operation": "UNSUPPORTED",
+      "result": null,
+      "trace": [
+        "Requires Oracle (SymPy) \u2014 outside NoiseCore scope"
+      ],
+      "fingerprint": {},
+      "mode": "NONE",
+      "inputs": {},
+      "id": "SERIES_04",
+      "problem": "Compute the limit of `(1 - cos(x))/x^2` as x approaches 0.",
+      "expected": "1/2",
+      "category": "series",
+      "correct": false,
+      "verdict": "\u2717 WRONG"
+    }
+  ]
+}
