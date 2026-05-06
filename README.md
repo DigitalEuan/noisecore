@@ -1,4 +1,4 @@
-![noisecore](noisecore_vm_1_2.png)
+![noisecore](noisecore_vm_1_3.png)
 
 # NoiseCore VM
 Version 1.2.0
