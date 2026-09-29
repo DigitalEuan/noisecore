@@ -1,0 +1,50 @@
+; ============================================================
+; 10_mantissa_wall.nca — print dyadic vs odd orbits side by side
+; ============================================================
+; Uses: DYORBIT R, #k, #n, #m   →  R = (2^n · m) mod 2^k       (dies)
+;       ODORBIT R, #p, #n       →  R = 2^n mod p                (cycles)
+; Prints 8 steps of 1/8 (dyadic) and 1/7 (odd prime).
+; ============================================================
+
+.equ K 3           ; dyadic 1/8 (k=3, m=1)
+.equ P 7           ; odd target 1/7
+.equ STEPS 8
+
+    ; dyadic: 1/8 → 0 in exactly k=3 steps
+    LOAD    R0, #0
+loop_d:
+    CMPI    R0, STEPS
+    JGE     sep
+    DYORBIT R1, #K, R0, #1
+    PUSH    R0
+    MOV     R0, R1
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+    POP     R0
+    ADDI    R0, R0, #1
+    JMP     loop_d
+sep:
+    LOAD    R0, '|'
+    SYSCALL 2
+    LOAD    R0, ' '
+    SYSCALL 2
+
+    ; odd: 1/7 cycles with period 3 forever
+    LOAD    R0, #0
+loop_o:
+    CMPI    R0, STEPS
+    JGE     done
+    ODORBIT R1, #P, R0
+    PUSH    R0
+    MOV     R0, R1
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+    POP     R0
+    ADDI    R0, R0, #1
+    JMP     loop_o
+
+done:
+    SYSCALL 6
+    HALT

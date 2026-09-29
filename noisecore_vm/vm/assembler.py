@@ -177,12 +177,10 @@ class Assembler:
         instr_tokens: List[Tuple[int, Tuple[str, ...]]] = []  # (line_no, parts)
 
         for line_no, label, body in tokens:
-            # When a label is on the same line as an instruction (e.g. "start: LOAD R0, #5"),
-            # _RE_LABEL has already split them into (label="start", body="LOAD R0, #5").
-            # We cannot record the label→index binding yet because instr_index hasn't
-            # been incremented for this line. The binding is recorded further below,
-            # immediately before the instruction token is appended to instr_tokens.
-            # Labels on bare lines (no body) are handled in the `if not body:` block.
+            if label:
+                # label at this position binds to the next instruction
+                # (or to the .data slot if a data directive follows)
+                pass
 
             if not body:
                 # bare label line — record as instruction-position label

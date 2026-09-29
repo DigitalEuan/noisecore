@@ -112,15 +112,8 @@ def cmd_repl(args):
         try:
             prog = assemble(line)
             for instr in prog.instructions:
-                opcode = instr[0]
-                if opcode == 0x0F:          # HALT — skip in REPL context
-                    continue
-                if 0x10 <= opcode <= 0x1B:  # branch opcodes modify pc
-                    print("  warning: branch instructions (JMP, JZ, etc.) have no "
-                          "effect in the REPL — run a full program file instead.")
-                    continue
+                if instr[0] == 0x0F: continue
                 cpu.execute(instr)
-                cpu.pc = 0  # reset pc after each instruction so branches don't linger
             print(cpu.format_state())
         except Exception as e:
             print(f"  error: {e}")

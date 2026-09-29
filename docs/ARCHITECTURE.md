@@ -12,7 +12,7 @@ built on top of a 24-bit Golay [24,12,8] manifold.
 │   R0 R1 R2 R3 R4 R5 R6 R7(SP)        ◄── general-purpose registers        │
 │      └──────┬─────────┘                                                   │
 │             │                                                              │
-│      flags: Z N C V S                                                     │
+│      flags: Z N C V                                                       │
 │      pc:    instruction pointer                                            │
 │      call_stack: list of return PCs (CALL/RET)                            │
 │                                                                            │
@@ -63,27 +63,6 @@ comes back in R0. Anything caller-sensitive is `PUSH`ed before `CALL`
 and `POP`ped after `RET`. See `examples/03_factorial_recursive.nca`
 and `examples/06_fibonacci.nca` for canonical examples.
 
-## Call stack design
-
-Return addresses for `CALL`/`RET` are stored in a Python-level
-`call_stack` list, separate from the data stack (R7/SP). This is a
-deliberate architectural choice with three concrete benefits:
-
-1. **Robustness** — a data-stack imbalance (e.g. mismatched PUSH/POP)
-   cannot corrupt control flow. The CPU will raise `OverflowError` on
-   a bad data-stack operation, not silently return to the wrong address.
-
-2. **Compatibility** — this matches CPUs that maintain a separate link
-   register or hardware call stack (ARM Cortex-M, RISC-V with `ra`).
-
-3. **Clarity** — subroutine nesting is trivially visible in
-   `cpu.call_stack` during debugging.
-
-The data stack is still available for passing additional arguments
-and saving caller registers. If you need the return address to be
-visible on the data stack (e.g. for inspection or computed returns),
-push it manually before `CALL` and discard it after `RET`.
-
 ## Trace and reproducibility
 
 When constructed with `trace=True`, the CPU records every instruction:
@@ -124,108 +103,5 @@ CPU(substrate_mode=True)   # Golay-backed; full physics; ~5–10× slower
 CPU(substrate_mode=False)  # plain ints; ~10⁶ ips on a laptop
 ```
 
-Both modes pass the same 151-test suite (substrate-tagged tests run
+Both modes pass the same 118-test suite (substrate-tagged tests run
 substrate mode; ISA tests run plain mode for speed).
-
-## Shadow Processor (LAW_SHADOW_PROCESSOR_001)
-
-The [24,12,8] Golay code has a packing radius t = 3. The registers
-(`ShadowRegister`) hold values as base-12 digit sequences; each digit
-maps to a probe displacement via the displacement curve of the substrate.
-
-For the default `PERFECT_V1` substrate the displacement curve is linear
-for digits 0..4 — this is the **Phenomenal (linear) regime**:
-
-```
-digit  displacement  sm_consistent
-  0         0             True
-  1         1             True
-  2         2             True
-  3         3             True
-  4         4             True   ← elastic limit
-  5         1             False  ← Shadow Regime begins
-  6         4             False
-  7..11     …             False
-```
-
-When a digit value exceeds 4, the stored 24-bit vector crosses the
-Voronoi boundary of its local packing sphere and snaps to a new
-geometric anchor. The cell's `sm_consistent` flips to `False`. This
-transition is the **Shadow Regime**: excess frustration folds into the
-12-bit Noumenal (hidden) space of the Golay code.
-
-### S flag
-
-The CPU flag register gains a fifth flag, `S` (Shadow):
-
-| Flag | Set when |
-| ---- | -------- |
-| Z    | result == 0 |
-| N    | result < 0 |
-| C    | unsigned carry / borrow |
-| V    | signed overflow |
-| **S** | **any register write places at least one digit > 4 (Shadow Regime)** |
-
-`S` is **latching**: once set it remains `1` until an explicit `CLRS`
-instruction (`0x52`) or `cpu.reset()`. In `substrate_mode=False` (plain
-int mode) `S` is always `0`.
-
-Use `S` as a **phase-transition sensor**: if your program sets `S`, the
-computation has entered a regime where linear arithmetic breaks down and
-the substrate has folded into a new geometric anchor.
-
-### Carry work (LAW_CARRY_WORK_001)
-
-`ShadowRegister` additionally tracks `carry_work`: the cumulative count
-of base-4 carry events across all writes to that register. A base-4
-carry occurs when `(a_digit + b_digit) >= 4` at any digit position when
-adding two values.
-
-This measures the **geometric binding work** — the frustration generated
-during the assembly of values. Classical binding energy (e.g. nuclear
-binding energy per nucleon) is the macroscopic analogue of this quantity.
-
-```python
-from noisecore_vm.core.substrate import count_base4_carries
-
-# Proton (1836) + Neutron (1839) assembly work
-work = count_base4_carries(1836, 1839)
-
-# Aggregate CPU-level carry work after running a program
-cpu, info = run_program(src, substrate_mode=True)
-print(info["total_carry_work"])
-fp = cpu.substrate_fingerprint()
-print(fp["total_carry_work"])   # same value
-```
-
-### New opcode: CLRS (0x52)
-
-```
-CLRS         ; Clear Shadow flag — sets S = 0
-```
-
-Allows programs to probe shadow-entry in sections: execute a block,
-check whether `S` was set, then `CLRS` and move to the next block.
-`CLRS` does not affect Z, N, C, or V.
-
-### Python API
-
-```python
-from noisecore_vm.core.substrate import ShadowRegister, count_base4_carries
-
-r = ShadowRegister(mode="SM")
-r.write(5)
-print(r.shadow_active)          # True — digit 5 > PHENOMENAL_LIMIT
-print(r.shadow_fingerprint())   # full shadow state dict
-
-cpu = CPU(substrate_mode=True)
-cpu._write_reg(0, 5)
-print(cpu.flags["S"])           # 1 — latched
-cpu.execute((0x52,))            # CLRS
-print(cpu.flags["S"])           # 0 — cleared
-
-fp = cpu.substrate_fingerprint()
-print(fp["shadow_flag"])        # current S flag
-print(fp["shadow_registers"])   # indices of registers currently in shadow
-print(fp["total_carry_work"])   # cumulative carry work since last reset
-```

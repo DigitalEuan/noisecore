@@ -31,7 +31,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from ..core.substrate import NoiseRegisterV3, ShadowRegister, SubstrateALU
+from ..core.substrate import NoiseRegisterV3
 from .isa import ISA, SYSCALL_NAMES
 
 
@@ -125,10 +125,9 @@ class CPU:
 
     Public attributes
     -----------------
-    registers      : list[ShadowRegister]    — R0..R(N-1)  (substrate_mode=True)
-                     list[_PlainReg]          — R0..R(N-1)  (substrate_mode=False)
+    registers      : list[NoiseRegisterV3]   — R0..R(N-1)
     memory         : list[NoiseRegisterV3]   — main memory cells
-    flags          : dict[str,int]           — {'Z','N','C','V','S'}
+    flags          : dict[str,int]           — {'Z','N','C','V'}
     pc             : int                     — program counter
     halted         : bool
     cycles         : int                     — instructions executed
@@ -137,34 +136,13 @@ class CPU:
     devices        : list[Device]
     trace          : list[TraceEntry]        — populated when trace=True
 
-    Flags
-    -----
-    Z  Zero          — result == 0
-    N  Negative      — result < 0
-    C  Carry/Borrow  — unsigned overflow on add / borrow on sub
-    V  Overflow      — signed overflow
-    S  Shadow        — one or more registers are in the Shadow Regime
-                       (LAW_SHADOW_PROCESSOR_001): their stored digit(s)
-                       exceed the Golay elastic limit (4), meaning the
-                       computation has crossed the Voronoi boundary of the
-                       linear phenomenal plane.  S is a *latching* flag —
-                       once set it remains set until an explicit CLRS
-                       instruction (opcode 0x52) or a cpu.reset().
-                       Only meaningful when substrate_mode=True; always 0
-                       in plain-int mode.
-
     Conventions
     -----------
     • R7 is the stack pointer (SP) by convention — initialised to MEMORY_SIZE-1
       and grows downward (PUSH decrements, POP increments).
-    • The dedicated `call_stack` list holds return addresses for CALL/RET,
-      kept separate from the data stack (R7/SP) as a deliberate ABI choice:
-      this prevents a data-stack imbalance from corrupting control flow,
-      matches the behaviour of hardware CPUs that use a link-register or
-      separate call stack (e.g. ARM Cortex-M), and simplifies recursive
-      programs (see examples/03_factorial_recursive.nca). If you want the
-      return address visible on the data stack for inspection, PUSH the
-      return address manually before CALL and pop it after RET.
+    • The dedicated `call_stack` list holds return addresses for CALL/RET
+      (kept separate from data stack to keep the demo clear; can be migrated to
+      memory-stack form later without ISA change).
     """
 
     DEFAULT_NUM_REGISTERS = 8
@@ -194,14 +172,14 @@ class CPU:
 
         # Registers
         if substrate_mode:
-            self.registers: List[ShadowRegister] = [
-                ShadowRegister(mode=mode) for _ in range(num_registers)
+            self.registers: List[NoiseRegisterV3] = [
+                NoiseRegisterV3(mode=mode) for _ in range(num_registers)
             ]
         else:
             self.registers = [_PlainReg() for _ in range(num_registers)]
         self._signs: List[bool] = [False] * num_registers
 
-        # Memory (NoiseRegisterV3 — no shadow tracking needed for memory cells)
+        # Memory
         if substrate_mode:
             self.memory: List[NoiseRegisterV3] = [
                 NoiseRegisterV3(mode=mode) for _ in range(memory_size)
@@ -210,8 +188,8 @@ class CPU:
             self.memory = [_PlainReg() for _ in range(memory_size)]
         self._mem_signs: List[bool] = [False] * memory_size
 
-        # CPU state — S flag added for Shadow Processor (LAW_SHADOW_PROCESSOR_001)
-        self.flags: Dict[str, int] = {"Z": 0, "C": 0, "V": 0, "N": 0, "S": 0}
+        # CPU state
+        self.flags: Dict[str, int] = {"Z": 0, "C": 0, "V": 0, "N": 0}
         self.pc = 0
         self.halted = False
         self.exit_code = 0
@@ -232,17 +210,16 @@ class CPU:
         self.do_trace = trace
         self.trace: List[TraceEntry] = []
 
+        # Zero-storage v5: cost ledger + moving delta-sigma state
+        from ..ledger import Ledger
+        self.ledger = Ledger()
+        self._mds = None   # MovingDeltaSigma, created by MDSRT
+
     # ── REGISTER / MEMORY ACCESSORS ─────────────────────────────────────
 
     def _write_reg(self, idx: int, value: int) -> None:
         self._signs[idx] = value < 0
         self.registers[idx].write(abs(value))
-        # Latch the S (Shadow) flag if this register entered the Shadow Regime.
-        # S is latching: once set it stays set until CLRS or reset().
-        # Only ShadowRegister (substrate_mode=True) carries shadow_active.
-        if self.substrate_mode and hasattr(self.registers[idx], "shadow_active"):
-            if self.registers[idx].shadow_active:
-                self.flags["S"] = 1
 
     def _read_reg(self, idx: int) -> int:
         mag = self.registers[idx].read()
@@ -269,27 +246,23 @@ class CPU:
         self.flags["C"] = 1 if carry else 0
         self.flags["V"] = 1 if overflow else 0
 
-    def _add_flags(self, a: int, b: int, result: int, *,
-                   carry_out: bool = None) -> None:
-        if carry_out is None:
-            carry_out = (abs(a) + abs(b)) > self._word_max
+    def _add_flags(self, a: int, b: int, result: int) -> None:
+        carry = 1 if (abs(a) + abs(b)) > self._word_max else 0
         overflow = (
             (a >= 0 and b >= 0 and result < 0) or
             (a < 0 and b < 0 and result >= 0) or
             result > self._word_signed_max or result < self._word_signed_min
         )
-        self._update_flags(result, carry=int(carry_out), overflow=overflow)
+        self._update_flags(result, carry=carry, overflow=overflow)
 
-    def _sub_flags(self, a: int, b: int, result: int, *,
-                   borrow_out: bool = None) -> None:
-        if borrow_out is None:
-            borrow_out = a < b
+    def _sub_flags(self, a: int, b: int, result: int) -> None:
+        borrow = 1 if a < b else 0
         overflow = (
             (a >= 0 and b < 0 and result < 0) or
             (a < 0 and b >= 0 and result >= 0) or
             result > self._word_signed_max or result < self._word_signed_min
         )
-        self._update_flags(result, carry=int(borrow_out), overflow=overflow)
+        self._update_flags(result, carry=borrow, overflow=overflow)
 
     # ── INSTRUCTION EXECUTION ──────────────────────────────────────────
 
@@ -365,7 +338,16 @@ class CPU:
         # ── syscalls ──
         elif opcode == 0x50: self._op_syscall(*args)
         elif opcode == 0x51: pass   # NOP
-        elif opcode == 0x52: self.flags["S"] = 0  # CLRS — clear Shadow flag
+
+        # ── delta-sigma & mantissa wall (exact arithmetic) ──
+        elif opcode in (0x60, 0x61, 0x62, 0x63, 0x64, 0x65):
+            from .delta_sigma_ops import DELTA_SIGMA_OPS
+            DELTA_SIGMA_OPS[opcode](self, *args)
+
+        # ── zero-storage substrate (v5) ──
+        elif opcode in (0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D):
+            from .zero_storage_ops import ZERO_STORAGE_OPS
+            ZERO_STORAGE_OPS[opcode](self, *args)
 
         else:
             raise ValueError(f"Unknown opcode: 0x{opcode:02X}")
@@ -381,100 +363,6 @@ class CPU:
                 cycle=self.cycles,
             ))
 
-    # ─── Substrate-native arithmetic helpers ──────────────────────────────────
-    #
-    # When substrate_mode=True these helpers route through SubstrateALU so that
-    # all ADD/SUB/MUL/DIV operate digit-by-digit on the base-12 cell arrays
-    # (LAW_SUBSTRATE_ALU_001/002/003/004).  In plain mode they fall back to
-    # Python operators, which is correct and fast for non-substrate workloads.
-    #
-    # Every method returns the signed integer result for flag computation.
-    # The ALU writes the magnitude directly into the destination register;
-    # the sign is stored separately in self._signs[rd].
-
-    def _sau_add(self, rd: int, rs1: int, rs2: int) -> tuple:
-        """
-        Substrate-native signed ADD.
-        Returns (signed_result: int, carry_out: bool).
-        """
-        if self.substrate_mode:
-            ra, rb, rdst = self.registers[rs1], self.registers[rs2], self.registers[rd]
-            sa, sb = self._signs[rs1], self._signs[rs2]
-            result_neg, carry_out, _ = SubstrateALU.add(ra, sa, rb, sb, rdst)
-            self._signs[rd] = result_neg
-            # Latch S flag
-            if rdst.shadow_active:
-                self.flags["S"] = 1
-            signed_result = self._read_reg(rd)
-            return signed_result, carry_out
-        # Plain mode
-        a, b = self._read_reg(rs1), self._read_reg(rs2)
-        r = a + b
-        self._write_reg(rd, r)
-        return r, abs(a) + abs(b) > self._word_max
-
-    def _sau_sub(self, rd: int, rs1: int, rs2: int) -> tuple:
-        """
-        Substrate-native signed SUB.
-        Returns (signed_result: int, borrow_out: bool).
-        """
-        if self.substrate_mode:
-            ra, rb, rdst = self.registers[rs1], self.registers[rs2], self.registers[rd]
-            sa, sb = self._signs[rs1], self._signs[rs2]
-            result_neg, borrow_out, _ = SubstrateALU.sub(ra, sa, rb, sb, rdst)
-            self._signs[rd] = result_neg
-            if rdst.shadow_active:
-                self.flags["S"] = 1
-            signed_result = self._read_reg(rd)
-            return signed_result, borrow_out
-        a, b = self._read_reg(rs1), self._read_reg(rs2)
-        r = a - b
-        self._write_reg(rd, r)
-        return r, a < b
-
-    def _sau_add_imm(self, rd: int, rs: int, imm: int) -> tuple:
-        """
-        Substrate-native signed ADDI (register + immediate).
-        Loads the immediate into a temporary ShadowRegister, then delegates to add().
-        Returns (signed_result: int, carry_out: bool).
-        """
-        if self.substrate_mode:
-            ra = self.registers[rs]
-            sa = self._signs[rs]
-            # Immediate has its own sign
-            si = imm < 0
-            tmp = ShadowRegister(mode=ra.mode)
-            tmp.write(abs(imm))
-            rdst = self.registers[rd]
-            result_neg, carry_out, _ = SubstrateALU.add(ra, sa, tmp, si, rdst)
-            self._signs[rd] = result_neg
-            if rdst.shadow_active:
-                self.flags["S"] = 1
-            return self._read_reg(rd), carry_out
-        a = self._read_reg(rs)
-        r = a + imm
-        self._write_reg(rd, r)
-        return r, abs(a) + abs(imm) > self._word_max
-
-    def _sau_sub_imm(self, rd: int, rs: int, imm: int) -> tuple:
-        """Substrate-native signed SUBI. Returns (signed_result, borrow_out)."""
-        if self.substrate_mode:
-            ra = self.registers[rs]
-            sa = self._signs[rs]
-            si = imm < 0
-            tmp = ShadowRegister(mode=ra.mode)
-            tmp.write(abs(imm))
-            rdst = self.registers[rd]
-            result_neg, borrow_out, _ = SubstrateALU.sub(ra, sa, tmp, si, rdst)
-            self._signs[rd] = result_neg
-            if rdst.shadow_active:
-                self.flags["S"] = 1
-            return self._read_reg(rd), borrow_out
-        a = self._read_reg(rs)
-        r = a - imm
-        self._write_reg(rd, r)
-        return r, a < imm
-
     # ── INSTRUCTION IMPLEMENTATIONS ───────────────────────────────────
 
     def _op_load(self, rd, imm):
@@ -488,244 +376,117 @@ class CPU:
 
     def _op_add(self, rd, rs1, rs2):
         a, b = self._read_reg(rs1), self._read_reg(rs2)
-        r, carry_out = self._sau_add(rd, rs1, rs2)
-        self._add_flags(a, b, r, carry_out=carry_out)
+        r = a + b
+        self._write_reg(rd, r)
+        self._add_flags(a, b, r)
 
     def _op_sub(self, rd, rs1, rs2):
         a, b = self._read_reg(rs1), self._read_reg(rs2)
-        r, borrow_out = self._sau_sub(rd, rs1, rs2)
-        self._sub_flags(a, b, r, borrow_out=borrow_out)
+        r = a - b
+        self._write_reg(rd, r)
+        self._sub_flags(a, b, r)
 
     def _op_mul(self, rd, rs1, rs2):
-        if self.substrate_mode:
-            sa, sb = self._signs[rs1], self._signs[rs2]
-            result_neg = SubstrateALU.mul(
-                self.registers[rs1], sa,
-                self.registers[rs2], sb,
-                self.registers[rd],
-            )
-            self._signs[rd] = result_neg
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            a, b = self._read_reg(rs1), self._read_reg(rs2)
-            r = a * b
-            self._write_reg(rd, r)
+        a, b = self._read_reg(rs1), self._read_reg(rs2)
+        r = a * b
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_div(self, rd, rs1, rs2):
-        if self.registers[rs2].read() == 0 and not self._signs[rs2]:
-            # Fast zero-check without reading full int
-            b_zero = all(c.read() == 0 for c in self.registers[rs2].cells) \
-                if self.substrate_mode else (self._read_reg(rs2) == 0)
-        else:
-            b_zero = False
-        if self.substrate_mode:
-            b_zero = all(c.read() == 0 for c in self.registers[rs2].cells)
-        else:
-            b_zero = self._read_reg(rs2) == 0
-        if b_zero:
+        a, b = self._read_reg(rs1), self._read_reg(rs2)
+        if b == 0:
             raise ZeroDivisionError(f"DIV: R{rs2} is zero")
-        if self.substrate_mode:
-            sa, sb = self._signs[rs1], self._signs[rs2]
-            q_neg, _ = SubstrateALU.divmod(
-                self.registers[rs1], sa,
-                self.registers[rs2], sb,
-                self.registers[rd], None,
-            )
-            self._signs[rd] = q_neg
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            a, b = self._read_reg(rs1), self._read_reg(rs2)
-            sign = (a < 0) ^ (b < 0)
-            q = abs(a) // abs(b)
-            r = -q if sign and q != 0 else q
-            self._write_reg(rd, r)
+        sign = (a < 0) ^ (b < 0)
+        q = abs(a) // abs(b)
+        r = -q if sign and q != 0 else q
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_mod(self, rd, rs1, rs2):
-        if self.substrate_mode:
-            b_zero = all(c.read() == 0 for c in self.registers[rs2].cells)
-        else:
-            b_zero = self._read_reg(rs2) == 0
-        if b_zero:
+        a, b = self._read_reg(rs1), self._read_reg(rs2)
+        if b == 0:
             raise ZeroDivisionError(f"MOD: R{rs2} is zero")
-        if self.substrate_mode:
-            sa, sb = self._signs[rs1], self._signs[rs2]
-            # Need a temporary register for the quotient
-            tmp_q = ShadowRegister(mode=self.registers[rd].mode)
-            _, r_neg = SubstrateALU.divmod(
-                self.registers[rs1], sa,
-                self.registers[rs2], sb,
-                tmp_q, self.registers[rd],
-            )
-            self._signs[rd] = r_neg
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            a, b = self._read_reg(rs1), self._read_reg(rs2)
-            r = abs(a) % abs(b)
-            result = -r if a < 0 and r != 0 else r
-            self._write_reg(rd, result)
-            r = result
-        self._update_flags(r)
+        r = abs(a) % abs(b)
+        result = -r if a < 0 and r != 0 else r
+        self._write_reg(rd, result)
+        self._update_flags(result)
 
     def _op_and(self, rd, rs1, rs2):
-        if self.substrate_mode:
-            SubstrateALU.bitwise_and(self.registers[rs1], self.registers[rs2], self.registers[rd])
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs1].read() & self.registers[rs2].read()
-            self._write_reg(rd, r)
+        a = self.registers[rs1].read()
+        b = self.registers[rs2].read()
+        r = a & b
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_or(self, rd, rs1, rs2):
-        if self.substrate_mode:
-            SubstrateALU.bitwise_or(self.registers[rs1], self.registers[rs2], self.registers[rd])
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs1].read() | self.registers[rs2].read()
-            self._write_reg(rd, r)
+        a = self.registers[rs1].read()
+        b = self.registers[rs2].read()
+        r = a | b
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_xor(self, rd, rs1, rs2):
-        if self.substrate_mode:
-            SubstrateALU.bitwise_xor(self.registers[rs1], self.registers[rs2], self.registers[rd])
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs1].read() ^ self.registers[rs2].read()
-            self._write_reg(rd, r)
+        a = self.registers[rs1].read()
+        b = self.registers[rs2].read()
+        r = a ^ b
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_not(self, rd, rs):
-        if self.substrate_mode:
-            SubstrateALU.bitwise_not(self.registers[rs], self.registers[rd], self.word_bits)
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            mask = (1 << self.word_bits) - 1
-            r = (~self.registers[rs].read()) & mask
-            self._write_reg(rd, r)
+        a = self.registers[rs].read()
+        mask = (1 << self.word_bits) - 1
+        r = (~a) & mask
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_lsl(self, rd, rs, amt):
-        if self.substrate_mode:
-            SubstrateALU.shift_left(self.registers[rs], amt, self.registers[rd])
-            self._signs[rd] = self._signs[rs]
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs].read() << amt
-            self._write_reg(rd, r)
-        self._update_flags(r)
+        v = self.registers[rs].read() << amt
+        self._write_reg(rd, v)
+        self._update_flags(v)
 
     def _op_lsr(self, rd, rs, amt):
-        if self.substrate_mode:
-            SubstrateALU.shift_right(self.registers[rs], amt, self.registers[rd])
-            self._signs[rd] = False   # LSR always positive
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs].read() >> amt
-            self._write_reg(rd, r)
-        self._update_flags(r)
+        v = self.registers[rs].read() >> amt
+        self._write_reg(rd, v)
+        self._update_flags(v)
 
     def _op_cmp(self, rs1, rs2):
-        """CMP: set flags from Rs1 − Rs2 without storing the result."""
-        if self.substrate_mode:
-            cmp_val = SubstrateALU.compare(
-                self.registers[rs1], self._signs[rs1],
-                self.registers[rs2], self._signs[rs2],
-            )
-            a, b = self._read_reg(rs1), self._read_reg(rs2)
-            self._sub_flags(a, b, a - b, borrow_out=(cmp_val < 0))
-        else:
-            a, b = self._read_reg(rs1), self._read_reg(rs2)
-            self._sub_flags(a, b, a - b)
+        """CMP: set flags from Rs1 - Rs2 without storing the result."""
+        a, b = self._read_reg(rs1), self._read_reg(rs2)
+        self._sub_flags(a, b, a - b)
 
     def _op_addi(self, rd, rs, imm):
         a = self._read_reg(rs)
-        r, carry_out = self._sau_add_imm(rd, rs, imm)
-        self._add_flags(a, imm, r, carry_out=carry_out)
+        r = a + imm
+        self._write_reg(rd, r)
+        self._add_flags(a, imm, r)
 
     def _op_subi(self, rd, rs, imm):
         a = self._read_reg(rs)
-        r, borrow_out = self._sau_sub_imm(rd, rs, imm)
-        self._sub_flags(a, imm, r, borrow_out=borrow_out)
+        r = a - imm
+        self._write_reg(rd, r)
+        self._sub_flags(a, imm, r)
 
     def _op_muli(self, rd, rs, imm):
-        if self.substrate_mode:
-            sa = self._signs[rs]
-            si = imm < 0
-            tmp = ShadowRegister(mode=self.registers[rd].mode)
-            tmp.write(abs(imm))
-            result_neg = SubstrateALU.mul(self.registers[rs], sa, tmp, si, self.registers[rd])
-            self._signs[rd] = result_neg
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            a = self._read_reg(rs)
-            r = a * imm
-            self._write_reg(rd, r)
+        a = self._read_reg(rs)
+        r = a * imm
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_andi(self, rd, rs, imm):
-        if self.substrate_mode:
-            tmp = ShadowRegister(mode=self.registers[rd].mode)
-            tmp.write(abs(imm))
-            SubstrateALU.bitwise_and(self.registers[rs], tmp, self.registers[rd])
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs].read() & imm
-            self._write_reg(rd, r)
+        a = self.registers[rs].read()
+        r = a & imm
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_ori(self, rd, rs, imm):
-        if self.substrate_mode:
-            tmp = ShadowRegister(mode=self.registers[rd].mode)
-            tmp.write(abs(imm))
-            SubstrateALU.bitwise_or(self.registers[rs], tmp, self.registers[rd])
-            self._signs[rd] = False
-            if self.registers[rd].shadow_active:
-                self.flags["S"] = 1
-            r = self._read_reg(rd)
-        else:
-            r = self.registers[rs].read() | imm
-            self._write_reg(rd, r)
+        a = self.registers[rs].read()
+        r = a | imm
+        self._write_reg(rd, r)
         self._update_flags(r)
 
     def _op_cmpi(self, rs, imm):
-        if self.substrate_mode:
-            si = imm < 0
-            tmp = ShadowRegister(mode=self.registers[rs].mode)
-            tmp.write(abs(imm))
-            a, b = self._read_reg(rs), imm
-            cmp_val = SubstrateALU.compare(self.registers[rs], self._signs[rs], tmp, si)
-            self._sub_flags(a, b, a - b, borrow_out=(cmp_val < 0))
-        else:
-            a = self._read_reg(rs)
-            self._sub_flags(a, imm, a - imm)
+        a = self._read_reg(rs)
+        self._sub_flags(a, imm, a - imm)
 
     def _op_store(self, rs, addr):
         self._write_mem(addr, self._read_reg(rs))
@@ -827,10 +588,6 @@ class CPU:
             )
 
         elapsed = time.perf_counter() - t0
-        total_carry_work = sum(
-            r.carry_work for r in self.registers
-            if hasattr(r, "carry_work")
-        )
         return {
             "cycles": self.cycles,
             "halted": self.halted,
@@ -841,8 +598,6 @@ class CPU:
             "elapsed_s": elapsed,
             "ips": int(self.cycles / elapsed) if elapsed > 0 else 0,
             "trace_hash": self._trace_hash() if self.do_trace else None,
-            "shadow_flag": self.flags["S"],
-            "total_carry_work": total_carry_work,
         }
 
     # ── DIAGNOSTICS ────────────────────────────────────────────────────
@@ -854,11 +609,7 @@ class CPU:
             tag = " (SP)" if i == self.SP_REGISTER else ""
             lines.append(f"  R{i}{tag}: {v}")
         f = self.flags
-        shadow_note = "  [SHADOW REGIME — LAW_SHADOW_PROCESSOR_001]" if f["S"] else ""
-        lines.append(
-            f"  Flags: Z={f['Z']} N={f['N']} C={f['C']} V={f['V']} S={f['S']}"
-            f"  Halted={self.halted}{shadow_note}"
-        )
+        lines.append(f"  Flags: Z={f['Z']} N={f['N']} C={f['C']} V={f['V']}  Halted={self.halted}")
         return "\n".join(lines)
 
     def reset(self) -> None:
@@ -867,7 +618,7 @@ class CPU:
         for m in self.memory: m.write(0)
         self._signs = [False] * self.num_registers
         self._mem_signs = [False] * self.memory_size
-        self.flags = {"Z": 0, "C": 0, "V": 0, "N": 0, "S": 0}
+        self.flags = {"Z": 0, "C": 0, "V": 0, "N": 0}
         self.pc = 0
         self.halted = False
         self.exit_code = 0
@@ -886,56 +637,17 @@ class CPU:
 
     def substrate_fingerprint(self) -> Dict[str, Any]:
         """
-        Aggregate substrate fingerprint over all register cells.
-
-        Returns:
-            nrci_mean: Mean NRCI across all register cells.
-                NOTE — NRCI is a property of the *substrate geometry*,
-                not of the stored values. For a CPU built entirely on
-                PERFECT_V1 substrates (the default), nrci_mean is always
-                0.7692 regardless of what has been computed. It would
-                differ only if different substrate types were mixed across
-                registers. Use magnitude_sha to detect computation state.
-
-            magnitude_sha: SHA-256 (first 16 hex chars) of the magnitude
-                pattern across all registers + first 32 memory cells.
-                This IS computation-dependent — it changes as registers
-                and memory are written, giving a deterministic geometric
-                signature of the CPU's current numeric state.
-
-            shadow_flag: Current value of the S (Shadow) flag.
-                1 = at least one register has entered the Shadow Regime
-                (LAW_SHADOW_PROCESSOR_001) at some point since last reset.
-
-            shadow_registers: List of register indices currently in the
-                Shadow Regime (their ShadowRegister.shadow_active is True).
-
-            total_carry_work: Sum of carry_work across all ShadowRegisters.
-                Implements LAW_CARRY_WORK_001 — the accumulated base-4
-                carry events measure the geometric binding work performed
-                by this CPU since last reset.
+        Aggregate substrate fingerprint over all cells with non-zero magnitude.
+        Returns mean NRCI and a SHA-256 of the magnitude pattern.
         """
         if not self.substrate_mode:
-            return {
-                "mode": "plain",
-                "nrci_mean": None,
-                "magnitude_sha": None,
-                "shadow_flag": 0,
-                "shadow_registers": [],
-                "total_carry_work": 0,
-            }
+            return {"mode": "plain", "nrci_mean": None, "magnitude_sha": None}
         nrcis: List[float] = []
         mag_signature: List[int] = []
-        shadow_reg_indices: List[int] = []
-        total_carry_work: int = 0
-        for i, r in enumerate(self.registers):
+        for r in self.registers:
             mag_signature.append(r.read())
             if r.cells:
                 nrcis.append(r.cells[0].fingerprint()["nrci"])
-            if hasattr(r, "shadow_active") and r.shadow_active:
-                shadow_reg_indices.append(i)
-            if hasattr(r, "carry_work"):
-                total_carry_work += r.carry_work
         for m in self.memory[:32]:           # first 32 mem cells only (cheap)
             mag_signature.append(m.read())
         sha = hashlib.sha256(repr(mag_signature).encode()).hexdigest()[:16]
@@ -943,34 +655,15 @@ class CPU:
             "mode": "substrate",
             "nrci_mean": round(sum(nrcis) / len(nrcis), 4) if nrcis else None,
             "magnitude_sha": sha,
-            "shadow_flag": self.flags["S"],
-            "shadow_registers": shadow_reg_indices,
-            "total_carry_work": total_carry_work,
         }
 
 
 # ── PLAIN-INT REGISTER (used when substrate_mode=False) ──────────────────────
 
 class _PlainReg:
-    """
-    Drop-in for NoiseRegisterV3 when speed matters and substrate isn't needed.
-
-    CPU._write_reg() always calls write(abs(value)), so this register only ever
-    receives non-negative magnitudes — matching the contract of NoiseRegisterV3.
-    The assert below makes that invariant explicit; it will surface immediately
-    if any future code path accidentally bypasses _write_reg.
-    """
+    """Drop-in for NoiseRegisterV3 when speed matters and substrate isn't needed."""
     def __init__(self):
         self._v = 0
         self.cells: list = []
-
-    def write(self, v: int, *_, **__):
-        v = int(v)
-        assert v >= 0, (
-            f"_PlainReg.write() received {v} — only non-negative magnitudes "
-            "are valid. The caller must pass abs(value) and store the sign separately."
-        )
-        self._v = v
-
-    def read(self) -> int:
-        return self._v
+    def write(self, v: int, *_, **__): self._v = max(0, int(v))
+    def read(self) -> int: return self._v

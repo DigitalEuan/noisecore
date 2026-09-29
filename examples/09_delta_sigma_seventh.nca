@@ -1,0 +1,37 @@
+; ============================================================
+; 09_delta_sigma_seventh.nca — delta-sigma chase of t = 1/7
+; ============================================================
+; Uses three new opcodes added in this round:
+;   DSSTATE  R, #num, #den    →  R = floor(num/den * 10^6)   (fixed point)
+;   DSBIT    R, #n, #den      →  R = bit_n of modulator with target n/den
+;   DSAVG    R, #n, #num, #den → R = average of first n bits × 10^6
+; We print the first 24 bits of the wobble of 1/7 and then its scaled avg.
+; ============================================================
+
+.equ T_NUM   1
+.equ T_DEN   7
+.equ TICKS   24
+
+    LOAD    R0, #0           ; bit index i
+
+loop:
+    CMPI    R0, TICKS
+    JGE     report
+
+    DSBIT   R1, R0, #T_NUM, #T_DEN     ; R1 = bit_i of (1/7)
+    PUSH    R0
+    MOV     R0, R1
+    SYSCALL 1                           ; print 0 or 1
+    POP     R0
+
+    ADDI    R0, R0, #1
+    JMP     loop
+
+report:
+    SYSCALL 6                           ; newline
+
+    ; average over 24 ticks, scaled by 10^6 (so ~142857)
+    DSAVG   R0, #TICKS, #T_NUM, #T_DEN
+    SYSCALL 1
+    SYSCALL 6
+    HALT

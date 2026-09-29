@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "real_golay_engine": true,
+  "opcode_count": 45,
+  "pytest": "============================= 118 passed in 6.16s ==============================",
+  "examples_plain_pass": "8/8",
+  "examples_substrate_pass": "8/8",
+  "traces_stable": "8/8",
+  "calibration": {
+    "engine": "real",
+    "substrate_hw": 9,
+    "baseline_sw": 7,
+    "elastic_limit": 12,
+    "curve_first_5": {
+      "0": 0,
+      "1": 1,
+      "2": 2,
+      "3": 3,
+      "4": 4
+    }
+  },
+  "examples_plain": [
+    {
+      "name": "01_hello.nca",
+      "ok": true,
+      "cycles": 12,
+      "elapsed_s": 0.0004,
+      "ips": 29071,
+      "output": "HELLO\n",
+      "nrci_mean": null
+    },
+    {
+      "name": "02_factorial_iter.nca",
+      "ok": true,
+      "cycles": 38,
+      "elapsed_s": 0.0002,
+      "ips": 153581,
+      "output": "720\n",
+      "nrci_mean": null
+    },
+    {
+      "name": "03_factorial_recursive.nca",
+      "ok": true,
+      "cycles": 49,
+      "elapsed_s": 0.0002,
+      "ips": 200259,
+      "output": "720\n",
+      "nrci_mean": null
+    },
+    {
+      "name": "04_bubble_sort.nca",
+      "ok": true,
+      "cycles": 450,
+      "elapsed_s": 0.0009,
+      "ips": 519184,
+      "output": "1 2 3 4 5 6 7 8 \n",
+      "nrci_mean": null
+    },
+    {
+      "name": "05_prime_sieve.nca",
+      "ok": true,
+      "cycles": 908,
+      "elapsed_s": 0.0015,
+      "ips": 619225,
+      "output": "2 3 5 7 11 13 17 19 23 29 \n",
+      "nrci_mean": null
+    },
+    {
+      "name": "06_fibonacci.nca",
+      "ok": true,
+      "cycles": 167,
+      "elapsed_s": 0.0004,
+      "ips": 392624,
+      "output": "0 1 1 2 3 5 8 13 21 34 \n",
+      "nrci_mean": null
+    },
+    {
+      "name": "07_gcd.nca",
+      "ok": true,
+      "cycles": 33,
+      "elapsed_s": 0.0002,
+      "ips": 178203,
+      "output": "18\n",
+      "nrci_mean": null
+    },
+    {
+      "name": "08_string_reverse.nca",
+      "ok": true,
+      "cycles": 172,
+      "elapsed_s": 0.0005,
+      "ips": 344383,
+      "output": "DLROW OLLEH\n",
+      "nrci_mean": null
+    }
+  ],
+  "examples_substrate": [
+    {
+      "name": "01_hello.nca",
+      "ok": true,
+      "cycles": 12,
+      "elapsed_s": 2.0237,
+      "ips": 5,
+      "output": "HELLO\n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "02_factorial_iter.nca",
+      "ok": true,
+      "cycles": 38,
+      "elapsed_s": 2.0,
+      "ips": 19,
+      "output": "720\n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "03_factorial_recursive.nca",
+      "ok": true,
+      "cycles": 49,
+      "elapsed_s": 1.9817,
+      "ips": 24,
+      "output": "720\n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "04_bubble_sort.nca",
+      "ok": true,
+      "cycles": 450,
+      "elapsed_s": 1.9902,
+      "ips": 226,
+      "output": "1 2 3 4 5 6 7 8 \n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "05_prime_sieve.nca",
+      "ok": true,
+      "cycles": 908,
+      "elapsed_s": 2.004,
+      "ips": 453,
+      "output": "2 3 5 7 11 13 17 19 23 29 \n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "06_fibonacci.nca",
+      "ok": true,
+      "cycles": 167,
+      "elapsed_s": 2.0462,
+      "ips": 81,
+      "output": "0 1 1 2 3 5 8 13 21 34 \n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "07_gcd.nca",
+      "ok": true,
+      "cycles": 33,
+      "elapsed_s": 1.9218,
+      "ips": 17,
+      "output": "18\n",
+      "nrci_mean": 0.7692
+    },
+    {
+      "name": "08_string_reverse.nca",
+      "ok": true,
+      "cycles": 172,
+      "elapsed_s": 1.9229,
+      "ips": 89,
+      "output": "DLROW OLLEH\n",
+      "nrci_mean": 0.7692
+    }
+  ],
+  "trace_hashes": [
+    {
+      "name": "01_hello.nca",
+      "stable": true,
+      "trace_sha256": "8b92d18c0b5c6c5ada08c0e43656d8d85dfadd0d2f69e31c59abbdc57cc4b73c"
+    },
+    {
+      "name": "02_factorial_iter.nca",
+      "stable": true,
+      "trace_sha256": "5ca7e1742f5e0edff56dfe3ba1a51342134e368bc0517299b91bea8a35ce3c14"
+    },
+    {
+      "name": "03_factorial_recursive.nca",
+      "stable": true,
+      "trace_sha256": "75258ec3b4dc662dd2a62e91c13ed8d2b77e81fd5e94426611e96bb9e20ae701"
+    },
+    {
+      "name": "04_bubble_sort.nca",
+      "stable": true,
+      "trace_sha256": "8ea73cb622e7367c393e8b4a01e614b66269e4e83cb804aca30cbcded4c853ef"
+    },
+    {
+      "name": "05_prime_sieve.nca",
+      "stable": true,
+      "trace_sha256": "b37b409d38aee2f7713ef39bdea288527978b971003a97fc520e929acbe1e695"
+    },
+    {
+      "name": "06_fibonacci.nca",
+      "stable": true,
+      "trace_sha256": "6b738d061ae268f387e2ab40d015d01a698238164ec9b610b607a71fce186422"
+    },
+    {
+      "name": "07_gcd.nca",
+      "stable": true,
+      "trace_sha256": "e0ba760ec66c331caabe867db8abd0c4b662f296e5efe9d9758ec800efbeb984"
+    },
+    {
+      "name": "08_string_reverse.nca",
+      "stable": true,
+      "trace_sha256": "d91aa6ef88a3d22621021aae87e439d3b59551b23af9863f86c66732e77fa1fe"
+    }
+  ]
+}

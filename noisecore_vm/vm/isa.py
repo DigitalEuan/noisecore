@@ -99,7 +99,27 @@ ISA: Dict[int, OpSpec] = {
     # system calls ---------------------------------------------------------------
     0x50: OpSpec(0x50, "SYSCALL", ("S",)),            # NEW
     0x51: OpSpec(0x51, "NOP",     ()),                # NEW
-    0x52: OpSpec(0x52, "CLRS",    ()),                # NEW: clear Shadow flag (S=0)
+
+    # delta-sigma & mantissa wall (exact-arithmetic subsystems) ----------------
+    # DS opcodes compute on exact Fractions and write scaled integers
+    # (×10^6 floor) back into the substrate register — the Golay cells only
+    # ever see unsigned magnitudes, exactly as the substrate demands.
+    0x60: OpSpec(0x60, "DSSTATE",  ("R", "#", "#")),       # sanity: state_0 = 0
+    0x61: OpSpec(0x61, "DSBIT",    ("R", "R", "#", "#")),  # R = bit_n of (num/den)
+    0x62: OpSpec(0x62, "DSAVG",    ("R", "#", "#", "#")),  # R = avg of n bits × 10^6
+    0x63: OpSpec(0x63, "DSONES",   ("R", "#", "#", "#")),  # R = ⌊n·num/den⌋ exactly
+    0x64: OpSpec(0x64, "DYORBIT",  ("R", "#", "R", "#")),  # R = (2^n · m) mod 2^k
+    0x65: OpSpec(0x65, "ODORBIT",  ("R", "#", "R")),       # R = 2^n mod p
+
+    # zero-storage substrate (v5) --------------------------------------------------
+    0x66: OpSpec(0x66, "SYN",     ("R", "R")),       # R = 12-bit syndrome of word in Rs
+    0x67: OpSpec(0x67, "ISGOLAY", ("R", "R")),       # R = 1 iff word in Rs is a codeword
+    0x68: OpSpec(0x68, "DECODE",  ("R", "R")),       # Leech decode of 24 ints at mem[Rs]
+    0x69: OpSpec(0x69, "LEDGER",  ("R", "#")),       # R = ledger count of item #imm
+    0x6A: OpSpec(0x6A, "MDSBIT",  ("R",)),           # R = next moving-DS bit
+    0x6B: OpSpec(0x6B, "MDSRT",   ("#", "#")),       # retarget moving DS, keep accumulator
+    0x6C: OpSpec(0x6C, "NRCI2",   ("R", "R", "R")),  # R = 10^6·NRCI(mem[Ra..+15], mem[Rb..+15])
+    0x6D: OpSpec(0x6D, "COST",    ("R",)),           # R = total ledger cost
 }
 
 # Reverse map for the assembler

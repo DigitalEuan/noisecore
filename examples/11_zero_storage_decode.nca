@@ -1,0 +1,43 @@
+; ============================================================
+; 11_zero_storage_decode.nca — zero-storage substrate demo
+; ============================================================
+; 1. ISGOLAY on the zero word (a codeword)           → 1
+; 2. ISGOLAY on the weight-1 word (not a codeword)   → 0
+; 3. DECODE of the zero target (origin is nearest)   → coord 0 = 0
+; 4. LEDGER parity_check count (2 calls × 12 rows)   → 24
+; 5. LEDGER table_lookup count (the whole point)     → 0
+; Expected output: "1 0 0 24 0"
+; ============================================================
+
+.data tgt 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+    LOAD    R0, #0
+    ISGOLAY R1, R0           ; 12 parity checks, no table
+    MOV     R0, R1
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+
+    LOAD    R0, #1
+    ISGOLAY R1, R0
+    MOV     R0, R1
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+
+    LOAD    R3, tgt
+    DECODE  R4, R3           ; nearest Leech point over 8192 cosets
+    LOAD_MEM R0, tgt
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+
+    LEDGER  R0, #0           ; parity_check
+    SYSCALL 1
+    LOAD    R0, ' '
+    SYSCALL 2
+
+    LEDGER  R0, #7           ; table_lookup — must be zero
+    SYSCALL 1
+    SYSCALL 6
+    HALT

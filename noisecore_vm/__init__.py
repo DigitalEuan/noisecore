@@ -23,21 +23,22 @@ Public API
 from .vm.cpu import CPU, ConsoleDevice, Device, TraceEntry
 from .vm.assembler import Assembler, AssembledProgram, AssemblerError, assemble
 from .vm.disassembler import disassemble
+from .core.zs import verify_cell_zero_storage, golay_weight_census, zero_storage_audit
+from .cesaro import delta_law, step as cesaro_step, cesaro, cesaro_error, bound_holds as cesaro_bound_holds
+from .deep_hole import l1 as profile_l1, DeepHoleClassifier
+from .ledger import Ledger, LEDGER_ITEMS
+from .moving_ds import MovingDeltaSigma
+from .nrci import nrci, nrci_enclosure
+from .decoder import decode as leech_decode
 from .vm.isa import ISA, MNEMONIC_TO_OPCODE, SYSCALL_NAMES, OpSpec, describe
-from .core.substrate import (
-    ShadowRegister, NoiseRegisterV3, NoiseCellV3,
-    SubstrateLibrary, count_base4_carries, SubstrateALU,
-)
 
-__version__ = "1.2.0"
+__version__ = "1.4.0"
 
 __all__ = [
     "CPU", "ConsoleDevice", "Device", "TraceEntry",
     "Assembler", "AssembledProgram", "AssemblerError", "assemble",
     "disassemble",
     "ISA", "MNEMONIC_TO_OPCODE", "SYSCALL_NAMES", "OpSpec", "describe",
-    "ShadowRegister", "NoiseRegisterV3", "NoiseCellV3",
-    "SubstrateLibrary", "count_base4_carries", "SubstrateALU",
     "run_program",
     "__version__",
 ]

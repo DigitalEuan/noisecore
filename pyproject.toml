@@ -4,25 +4,41 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "noisecore-vm"
-version = "1.2.0"
-description = "NoiseCore VM: a substrate-mediated virtual computation environment"
+version = "1.4.0"
+description = "A Golay-substrate-mediated virtual computation environment with full ISA, assembler, and Python toolchain"
 readme = "README.md"
-requires-python = ">=3.10"
-license = {text = "MIT"}
+requires-python = ">=3.9"
 authors = [
-  {name = "E R A Craig / UBP Research"}
+    {name = "E R A Craig", email = "noisecore@ubp.research"}
 ]
+license = {text = "MIT"}
 classifiers = [
-  "Programming Language :: Python :: 3",
-  "License :: OSI Approved :: MIT License",
-  "Operating System :: OS Independent"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Software Development :: Interpreters",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
 ]
+keywords = ["virtual-machine", "isa", "ubp", "golay-code", "substrate", "ALU"]
+
+[project.urls]
+Homepage   = "https://github.com/ercraig/noisecore-vm"
+Repository = "https://github.com/ercraig/noisecore-vm"
 
 [project.scripts]
 noisecore = "noisecore_vm.cli:main"
 
-[tool.setuptools]
-include-package-data = true
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 
-[tool.setuptools.packages.find]
-include = ["noisecore_vm*"]
+[tool.setuptools]
+packages = ["noisecore_vm", "noisecore_vm.core", "noisecore_vm.vm"]
+
+[tool.setuptools.package-data]
+"noisecore_vm" = ["*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
